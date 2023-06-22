@@ -17,6 +17,7 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-parser" % "0.14.5",
       "io.circe" %% "circe-generic" % "0.14.5",
 
+      "ch.qos.logback" % "logback-classic" % "1.4.7",
       "com.softwaremill.sttp.client3" %% "core" % "3.8.15",
       "com.softwaremill.sttp.client3" %% "http4s-backend" % "3.8.15",
 
