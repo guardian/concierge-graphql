@@ -50,14 +50,14 @@ object Content {
 
   val ContentIdArg = Argument("id", StringType, description = "content API ID to look up")
 
-  val Query = ObjectType[DocumentRepo, Unit](
-    "Query", fields[DocumentRepo, Unit](
-      Field("article", DocumentDefn,
-        arguments = ContentIdArg :: Nil,
-        resolve = ctx=> ctx.ctx.docById(ctx arg ContentIdArg)
-      )
-    )
-  )
-
-  val ContentSchema = Schema(Query)
+//  val Query = ObjectType[DocumentRepo, Unit](
+//    "Query", fields[DocumentRepo, Unit](
+//      Field("article", DocumentDefn,
+//        arguments = ContentIdArg :: Nil,
+//        resolve = ctx=> ctx.ctx.docById(ctx arg ContentIdArg)
+//      )
+//    )
+//  )
+//
+//  val ContentSchema = Schema(Query)
 }

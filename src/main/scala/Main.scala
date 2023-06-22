@@ -1,6 +1,8 @@
 import cats.effect._
 import cats.effect.unsafe.implicits.global
 import com.comcast.ip4s.IpLiteralSyntax
+import com.sksamuel.elastic4s.ElasticNodeEndpoint
+import datastore.ElasticsearchRepo
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.server.Router
@@ -10,11 +12,14 @@ import org.http4s.implicits._
 import scala.concurrent.duration._
 
 object Main extends IOApp {
+  val documentRepo = new ElasticsearchRepo(ElasticNodeEndpoint("http","localhost",9200, None))
+  val server = new GraphQLServer(documentRepo)
+
   val graphqlService = HttpRoutes.of[IO] {
     case req @ POST -> Root / "query" =>
-      GraphQLServer.handleRequest(req).compile.onlyOrError.flatten
+      server.handleRequest(req).compile.onlyOrError.flatten
     case GET -> Root / "schema" / name =>
-      GraphQLServer.getSchema(name)
+      server.getSchema(name)
   }
 
   def run(args:List[String]):IO[ExitCode] = {
