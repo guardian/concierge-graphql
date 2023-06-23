@@ -32,10 +32,14 @@ object Content extends SchemaDefinition with CirceHelpers {
 
   private val docId = io.circe.optics.JsonPath.root.id.string
   private val altIds = io.circe.optics.JsonPath.root.alternateIds.each.string
+  private val docScore = io.circe.optics.JsonPath.root.score.double
+
   val definition:ObjectType[Unit, Json] = ObjectType(
     "Article",
     "The base type that all content derives from",
     ()=> fields[Unit, Json](
+
+      Field("score", OptionType(FloatType), Some("The relevancy score of this hit to the query which you made"), resolve= ctx=> docScore.getOption(ctx.value)),
       Field("id", OptionType(StringType), Some("The content api ID (path)"), resolve = (ctx)=> docId.getOption(ctx.value).get),
       Field("type", OptionType(ContentTypeEnum), Some("What type of content is this document"), resolve = ctx => getString(ctx, "type")),
       Field("alternateIds", ListType(StringType), Some("Alternate IDs for this article"), resolve = ctx => altIds.getAll(ctx.value)),
@@ -50,23 +54,19 @@ object Content extends SchemaDefinition with CirceHelpers {
     )
   )
 
-  val ContentIdArg = Argument("id", OptionInputType(StringType), description = "get one article by ID")
-  val WebTitleArg = Argument("webTitle", OptionInputType(StringType), description = "look up many articles by web title")
+  import anotherschema.query.ContentQueryParameters._
 
   val Query = ObjectType[DocumentRepo, Unit](
     "Query", fields[DocumentRepo, Unit](
       Field("article", ListType(definition),
-        arguments = ContentIdArg :: WebTitleArg :: Nil,
+        arguments = AllContentQueryParameters,
         resolve = ctx=>
           (ctx arg ContentIdArg, ctx arg WebTitleArg) match {
             case (Some(contentId), _)=>
               ctx.ctx.docById (contentId)
             case (_, Some(webTitle))=>
               ctx.ctx
-                .docsByWebTitle(webTitle)
-                .map(result=>{
-                  result
-                })
+                .docsByWebTitle(webTitle, ctx arg OrderDate, ctx arg OrderBy)
             case _=>
               throw new RuntimeException("No fields given to search on")
           }
