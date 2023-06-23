@@ -8,12 +8,12 @@ import org.http4s.dsl.io._
 import org.http4s.server.Router
 import org.http4s.ember.server._
 import org.http4s.implicits._
+import org.slf4j.LoggerFactory
 import security.Security.limitByTier
 import security.{InternalTier, UserTier}
 
-import scala.concurrent.duration._
-
 object Main extends IOApp {
+  private val logger = LoggerFactory.getLogger(getClass)
   val documentRepo = new ElasticsearchRepo(ElasticNodeEndpoint("http","localhost",9200, None))
   val server = new GraphQLServer(documentRepo)
 
@@ -25,9 +25,15 @@ object Main extends IOApp {
           .onlyOrError
           .flatten
           .map(response => response.copy(headers = response.headers.put("Content-Type" -> "application/json")))
+          .handleErrorWith(err=>{
+            logger.error(s"Uncaught error when handling request: ${err.getMessage}", err)
+            InternalServerError(err.getMessage())
+          })
       }
     case GET -> Root / "schema" / name =>
-      server.getSchema(name)
+      server
+        .getSchema(name)
+      .map(response => response.copy(headers = response.headers.put("Content-Type" -> "application/graphql")))
   }
 
   def run(args:List[String]):IO[ExitCode] = {

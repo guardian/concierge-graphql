@@ -12,6 +12,8 @@ import sangria.marshalling.circe._
 import io.circe.syntax._
 import org.slf4j.LoggerFactory
 import sangria.ast.Document
+import utils.GraphQLRequestBody
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -26,7 +28,7 @@ class GraphQLServer(documentRepo:DocumentRepo) {
     "this is a test"
   }
 
-  private def performQuery(doc:Document) =
+  private def performQuery(doc:Document, variables:Option[Map[String,String]]) =
     IO.fromFuture(
       IO(
         Executor.execute(Content.ContentSchema, doc, userContext = documentRepo).map(_.asJson.noSpaces)
@@ -42,11 +44,11 @@ class GraphQLServer(documentRepo:DocumentRepo) {
   def handleRequest(req:Request[IO]) = {
     for {
       bodyText <- req.bodyText
-      parsedQuery <- parser(bodyText)
+      gqlRequest <- Stream.apply(GraphQLRequestBody.parseJsonRequest(bodyText))
+      parsedQuery <- parser(gqlRequest.query)
       result <- parsedQuery match {
         case Success(doc)=>
-          println(renderPretty(doc))
-          Stream.apply(performQuery(doc))
+          Stream.apply(performQuery(doc, gqlRequest.variables))
             .handleErrorWith(err => {
               logger.error("Error performing query", err)
               Stream.apply(InternalServerError(err.getMessage))
