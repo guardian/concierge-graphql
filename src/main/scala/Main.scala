@@ -8,6 +8,8 @@ import org.http4s.dsl.io._
 import org.http4s.server.Router
 import org.http4s.ember.server._
 import org.http4s.implicits._
+import security.Security.limitByTier
+import security.{InternalTier, UserTier}
 
 import scala.concurrent.duration._
 
@@ -17,11 +19,13 @@ object Main extends IOApp {
 
   val graphqlService = HttpRoutes.of[IO] {
     case req @ POST -> Root / "query" =>
-      server.handleRequest(req)
-        .compile
-        .onlyOrError
-        .flatten
-        .map(response=>response.copy(headers=response.headers.put("Content-Type" -> "application/json")))
+      limitByTier(req, InternalTier) {
+        server.handleRequest(req)
+          .compile
+          .onlyOrError
+          .flatten
+          .map(response => response.copy(headers = response.headers.put("Content-Type" -> "application/json")))
+      }
     case GET -> Root / "schema" / name =>
       server.getSchema(name)
   }
