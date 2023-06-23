@@ -17,7 +17,11 @@ object Main extends IOApp {
 
   val graphqlService = HttpRoutes.of[IO] {
     case req @ POST -> Root / "query" =>
-      server.handleRequest(req).compile.onlyOrError.flatten
+      server.handleRequest(req)
+        .compile
+        .onlyOrError
+        .flatten
+        .map(response=>response.copy(headers=response.headers.put("Content-Type" -> "application/json")))
     case GET -> Root / "schema" / name =>
       server.getSchema(name)
   }

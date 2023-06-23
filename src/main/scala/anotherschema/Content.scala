@@ -36,14 +36,22 @@ object Content extends CirceHelpers {
     )
   )
 
-  val ContentIdArg = Argument("id", StringType, description = "content API ID to look up")
-
+  val ContentIdArg = Argument("id", OptionInputType(StringType), description = "get one article by ID")
+  val WebTitleArg = Argument("webTitle", OptionInputType(StringType), description = "look up many articles by web title")
 
   val Query = ObjectType[DocumentRepo, Unit](
     "Query", fields[DocumentRepo, Unit](
       Field("article", definition,
-        arguments = ContentIdArg :: Nil,
-        resolve = ctx=> ctx.ctx.docById(ctx arg ContentIdArg)
+        arguments = ContentIdArg :: WebTitleArg :: Nil,
+        resolve = ctx=>
+          (ctx arg ContentIdArg, ctx arg WebTitleArg) match {
+            case (Some(contentId), _)=>
+              ctx.ctx.docById (contentId)
+            case (_, Some(webTitle))=>
+              ctx.ctx.docsByWebTitle(webTitle)
+            case _=>
+              throw new RuntimeException("No fields given to search on")
+          }
       )
     )
   )

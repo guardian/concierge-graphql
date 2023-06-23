@@ -9,8 +9,8 @@
         </layout>
     </appender>
 
-
-    <root level="debug">
+    <logger name="datastore" level="debug"/>
+    <root level="info">
         <appender-ref ref="CONSOLE"/>
     </root>
 

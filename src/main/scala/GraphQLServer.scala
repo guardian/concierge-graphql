@@ -10,11 +10,34 @@ import anotherschema.Content
 import datastore.DocumentRepo
 import sangria.marshalling.circe._
 import io.circe.syntax._
+import org.slf4j.LoggerFactory
+import sangria.ast.Document
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 class GraphQLServer(documentRepo:DocumentRepo) {
+  private val logger = LoggerFactory.getLogger(getClass)
+
   private def parser(content:String) = Stream.apply(QueryParser.parse(content))
+
+  def justATest:Future[String] = Future {
+    Thread.sleep(500)
+    "this is a test"
+  }
+
+  private def performQuery(doc:Document) =
+    IO.fromFuture(
+      IO(
+        Executor.execute(Content.ContentSchema, doc, userContext = documentRepo).map(_.asJson.noSpaces)
+      )
+    )
+    .map(body=>Ok(body))
+    .handleError(err=>{
+      logger.error(s"Could not run query: ${err.getMessage}", err)
+        BadRequest(err.getMessage)
+    })
+      .flatten
 
   def handleRequest(req:Request[IO]) = {
     for {
@@ -23,16 +46,11 @@ class GraphQLServer(documentRepo:DocumentRepo) {
       result <- parsedQuery match {
         case Success(doc)=>
           println(renderPretty(doc))
-          //Stream.apply(Ok(renderPretty(doc)))
-          Stream.apply(
-            IO.fromFuture(
-              IO(
-                Executor.execute(Content.ContentSchema, doc,
-                  userContext = documentRepo,
-                ).map(_.asJson.noSpaces)
-              )
-            )
-          ).map(result=>Ok(result))
+          Stream.apply(performQuery(doc))
+            .handleErrorWith(err => {
+              logger.error("Error performing query", err)
+              Stream.apply(InternalServerError(err.getMessage))
+            })
         case Failure(err)=>
           println(s"Syntax error: ${err.getMessage}")
           Stream.apply(BadRequest(err.getMessage))
