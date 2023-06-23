@@ -1,0 +1,23 @@
+stacks:
+  - content-api
+regions:
+  - eu-west-1
+deployments:
+#  cloudformation:
+#    type: cloud-formation
+#    app: apple-news
+#    parameters:
+#      templateStagePaths:
+#        CODE: AppleNews-CODE.template.json
+#        PROD: AppleNews-PROD.template.json
+#      amiParameter: AMIApplenews
+#      amiEncrypted: true
+#      amiTags:
+#        Recipe: ubuntu-focal-capi-arm-jdk11
+#        AmigoStage: PROD
+#        BuiltBy: amigo
+  concierge-graphql:
+    type: autoscaling
+    parameters:
+      bucketSsmLookup: true
+    dependencies: [ cloudformation ]

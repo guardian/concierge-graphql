@@ -1,8 +1,13 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+enablePlugins(DebianPlugin, JavaServerAppPackaging, SystemdPlugin)
+
+ThisBuild / version := "0.1.0"
 
 ThisBuild / scalaVersion := "2.13.11"
 
 val elastic4sVersion = "7.17.4"
+
+maintainer := "Content Platforms team <content-platforms.dev@theguardian.com>"
+packageSummary := "A proof-of-concept for doing CAPI queries with GraphQL"
 
 lazy val root = (project in file("."))
   .settings(
