@@ -18,13 +18,18 @@ object Main extends IOApp {
   val server = new GraphQLServer(documentRepo)
 
   val graphqlService = HttpRoutes.of[IO] {
+    case OPTIONS -> Root / "query" =>
+      IO(Response(
+        Status.Ok,
+        headers=Headers("Access-Control-Allow-Origin" -> "*", "Access-Control-Allow-Methods"->"POST, GET, OPTIONS", "Access-Control-Allow-Headers" -> s"Content-Type, ${security.KongHeader.name}")
+      ))
     case req @ POST -> Root / "query" =>
       limitByTier(req, InternalTier) {
         server.handleRequest(req)
           .compile
           .onlyOrError
           .flatten
-          .map(response => response.copy(headers = response.headers.put("Content-Type" -> "application/json")))
+          .map(response => response.copy(headers = response.headers.put("Content-Type" -> "application/json").put("Access-Control-Allow-Origin" -> "*")))
           .handleErrorWith(err=>{
             logger.error(s"Uncaught error when handling request: ${err.getMessage}", err)
             InternalServerError(err.getMessage())

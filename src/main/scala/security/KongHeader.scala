@@ -5,7 +5,7 @@ import org.http4s.Request
 import org.typelevel.ci.CIString
 
 object KongHeader {
-  private val name = CIString("X-Consumer-Username")
+  val name = CIString("X-Consumer-Username")
 
   /**
    * Extracts the user tier, as passed by Kong, from the given request
