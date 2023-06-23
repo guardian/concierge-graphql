@@ -18,9 +18,9 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint) extends DocumentRepo {
   private val logger = LoggerFactory.getLogger(getClass)
   private val client = ElasticClient(SttpRequestHttpClient(endpoint))
 
-  override def docById(id: String): Future[Json] = {
+  override def docById(id: String): Future[Iterable[Json]] = {
     client.execute {
-      search("content").query(MatchQuery("id", id))
+      search("content").query(MatchQuery("id", id)).sortByFieldDesc("webPublicationDate")
     }.flatMap(response=>{
       if(response.isSuccess) {
         response
@@ -31,11 +31,11 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint) extends DocumentRepo {
           .map(_.sourceAsString)
           .map(io.circe.parser.parse) match {
           case None=>
-            Future(Json.obj())
+            Future(Seq[Json]())
           case Some(Left(err))=>
             Future.failed(new RuntimeException(err))
           case Some(Right(json))=>
-            Future(json)
+            Future(Seq(json))
         }
       } else {
         Future.failed(response.error.asException)
@@ -43,9 +43,9 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint) extends DocumentRepo {
     })
   }
 
-  override def docsByWebTitle(webTitle: String): Future[Json] = {
+  override def docsByWebTitle(webTitle: String): Future[Iterable[Json]] = {
     client.execute {
-      search("content").query(MatchQuery("webTitle", webTitle))
+      search("content").query(MatchQuery("webTitle", webTitle)).sortByFieldDesc("webPublicationDate")
     }.flatMap(response=>{
       if(response.isSuccess) {
         logger.debug(s"webTitle query $webTitle returned ${response.result.hits} results")
@@ -65,7 +65,6 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint) extends DocumentRepo {
           Future(
             allResults
             .collect({case Right(content)=>content})
-            .asJson
           )
         }
       } else {

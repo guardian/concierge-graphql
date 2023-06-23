@@ -6,6 +6,6 @@ import schema.Content
 import scala.concurrent.Future
 
 trait DocumentRepo {
-  def docById(id:String):Future[Json]
-  def docsByWebTitle(webTitle:String):Future[Json]
+  def docById(id:String):Future[Iterable[Json]]
+  def docsByWebTitle(webTitle:String):Future[Iterable[Json]]
 }
