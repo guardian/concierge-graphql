@@ -58,11 +58,22 @@ object Content extends SchemaDefinition with CirceHelpers {
     )
   )
 
+  val edge:ObjectType[Unit, Edge[Json]] = ObjectType(
+    "ArticleEdge",
+    "A list of articles with pagination features",
+    ()=> fields[Unit, Edge[Json]](
+      Field("totalCount", LongType, Some("Total number of results that match your query"), resolve= _.value.totalCount),
+      Field("endCursor", OptionType(StringType), Some("The last record cursor in the set"), resolve = _.value.endCursor),
+      Field("hasNextPage", BooleanType, Some("Whether there are any more records to retrieve"), resolve = _.value.hasNextPage),
+      Field("nodes", ListType(definition), Some("The actual content returned"), resolve = _.value.nodes)
+    )
+  )
+
   import anotherschema.query.ContentQueryParameters._
 
   val Query = ObjectType[DocumentRepo, Unit](
     "Query", fields[DocumentRepo, Unit](
-      Field("article", ListType(definition),
+      Field("article", edge,
         arguments = AllContentQueryParameters,
         resolve = ctx=>
           (ctx arg ContentIdArg, ctx arg WebTitleArg) match {
