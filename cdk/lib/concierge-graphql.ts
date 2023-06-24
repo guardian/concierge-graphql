@@ -2,10 +2,11 @@ import type {GuStackProps} from "@guardian/cdk/lib/constructs/core";
 import {GuParameter, GuStack} from "@guardian/cdk/lib/constructs/core";
 import type {App} from "aws-cdk-lib";
 import {GuPlayApp} from "@guardian/cdk";
-import {InstanceClass, InstanceSize, InstanceType, Peer, Subnet, Vpc} from "aws-cdk-lib/aws-ec2";
+import {InstanceClass, InstanceSize, InstanceType, Peer, Port, Subnet, Vpc} from "aws-cdk-lib/aws-ec2";
 import {AccessScope} from "@guardian/cdk/lib/constants";
 import {aws_ssm} from "aws-cdk-lib";
 import {getHostName} from "./hostname";
+import {GuSecurityGroup} from "@guardian/cdk/lib/constructs/ec2";
 
 export class ConciergeGraphql extends GuStack {
   constructor(scope: App, id: string, props: GuStackProps) {
@@ -39,8 +40,9 @@ export class ConciergeGraphql extends GuStack {
 
     const hostedZoneId = aws_ssm.StringParameter.valueForStringParameter(this, `/account/services/capi.gutools/${this.stage}/hostedzoneid`);
 
-    new GuPlayApp(this, {
+    const app = new GuPlayApp(this, {
       access: {
+        //You should put Kong gateway in front of this
         scope: AccessScope.INTERNAL,
         cidrRanges: [Peer.ipv4("10.0.0.0/8")],
       },
@@ -67,6 +69,20 @@ export class ConciergeGraphql extends GuStack {
       },
       vpc,
     });
+
+    //Note - this SG will need to be manually added to the incoming rules of the appropriate ES instance to allow contact
+    app.autoScalingGroup.addSecurityGroup(new GuSecurityGroup(this, "ESAccess", {
+      app: "concierge-graphql",
+      description: "Allow access to Elasticsearch",
+      vpc,
+      egresses: [
+        {
+          range: Peer.ipv4("10.0.0.0/24"),
+          port: Port.tcp(9200),
+          description: "Allow outgoing to Elasticsearch data port"
+        }
+      ]
+    }))
   }
 
   getAccountPath(scope:GuStack, isPreview:boolean, elementName: string) {

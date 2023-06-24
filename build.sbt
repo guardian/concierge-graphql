@@ -24,6 +24,8 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-optics" % "0.14.1",
 
       "ch.qos.logback" % "logback-classic" % "1.4.7",
+      "net.logstash.logback" % "logstash-logback-encoder" % "7.3",
+
       "com.softwaremill.sttp.client3" %% "core" % "3.8.15",
       "com.softwaremill.sttp.client3" %% "http4s-backend" % "3.8.15",
 
@@ -31,5 +33,8 @@ lazy val root = (project in file("."))
       "com.sksamuel.elastic4s" %% "elastic4s-json-circe" % elastic4sVersion,
       // test kit
       "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test"
+    ),
+    dependencyOverrides ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.5"  //required for json logging encoder
     )
   )
