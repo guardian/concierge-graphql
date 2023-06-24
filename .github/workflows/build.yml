@@ -32,15 +32,15 @@ jobs:
         name: Build explorer
         working-directory: explorer
 
-#      - run: yarn install --frozen-lockfile
-#        name: Prepare for CDK infrastructure build
-#        working-directory: cdk
-#      - run: yarn test
-#        name: Test CDK infrastructure integrity
-#        working-directory: cdk
-#      - run: yarn synth
-#        name: Build infrastructure definition from CDK
-#        working-directory: cdk
+      - run: yarn install --frozen-lockfile
+        name: Prepare for CDK infrastructure build
+        working-directory: cdk
+      - run: yarn test
+        name: Test CDK infrastructure integrity
+        working-directory: cdk
+      - run: yarn synth
+        name: Build infrastructure definition from CDK
+        working-directory: cdk
 
       - name: Setup JDK
         uses: actions/setup-java@v3
@@ -69,9 +69,9 @@ jobs:
           contentDirectories: |
             concierge-graphql:
               - target/concierge-graphql_0.1.0_all.deb
-      #            cloudformation:
-      #              - cdk/cdk.out/AppleNews-PROD.template.json
-      #              - cdk/cdk.out/AppleNews-CODE.template.json
+            cloudformation:
+              - cdk/cdk.out/ConciergeGraphql-PROD.template.json
+              - cdk/cdk.out/ConciergeGraphql-CODE.template.json
 
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
