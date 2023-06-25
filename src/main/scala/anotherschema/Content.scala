@@ -55,6 +55,7 @@ object Content extends SchemaDefinition with CirceHelpers {
       Field("sectionId", OptionType(StringType), Some("Which section does this belong to"), resolve = ctx => getString(ctx,"sectionId")),
       Field("debug", OptionType(anotherschema.content.Debug.definition), Some("Internal debugging information"), resolve = ctx => (ctx.value \\ "debug").headOption),
       Field("blocks", anotherschema.content.Blocks.definition, None, resolve = ctx => (ctx.value \\ "blocks").head),
+      Field("cursor", OptionType(StringType), Some("Cursor for pagination"), resolve = ctx => getString(ctx, "cursor"))
     )
   )
 
@@ -81,7 +82,7 @@ object Content extends SchemaDefinition with CirceHelpers {
               ctx.ctx.docById (contentId)
             case (_, Some(webTitle))=>
               ctx.ctx
-                .docsByWebTitle(webTitle, ctx arg OrderDate, ctx arg OrderBy)
+                .docsByWebTitle(webTitle, ctx arg OrderDate, ctx arg OrderBy, ctx arg Limit)
             case _=>
               throw new RuntimeException("No fields given to search on")
           }

@@ -1,10 +1,28 @@
 package utils
 
+import anotherschema.Edge
 import com.sksamuel.elastic4s.Hit
 import com.sksamuel.elastic4s.requests.searches.SearchHit
 import io.circe.{Json, ParsingFailure}
+import io.circe.generic.auto
+import io.circe.syntax._
 
-case class RawResult(score:Float, index:String, content: Json, sort:Option[Seq[AnyRef]])
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+import scala.util.Try
+
+case class RawResult(score:Float, index:String, content: Json, sort:Option[Seq[Any]]) {
+  def fulljson:Json = {
+    val fieldsToAdd = Seq(
+      Json.fromFloat(score).map(jsScore => ("score" -> jsScore)),
+      Edge.cursorValue(sort).map(cur=>("cursor" -> Json.fromString(cur)))
+    ).collect({case Some(result)=>result})
+
+    fieldsToAdd
+      .foldLeft(content.asObject)((acc, elem)=>acc.map(_.+:(elem)))
+      .asJson
+  }
+}
 
 object RawResult {
   def apply(from:SearchHit):Either[ParsingFailure, RawResult] = {
