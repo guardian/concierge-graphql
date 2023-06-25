@@ -7,23 +7,14 @@ import org.slf4j.LoggerFactory
 
 import java.nio.charset.StandardCharsets
 import java.util.Base64
+import scala.util.Try
 
 case class Edge[T](totalCount:Long, endCursor:Option[String], hasNextPage:Boolean, nodes:Seq[T])
 
 object Edge {
   private val logger = LoggerFactory.getLogger(getClass)
   private val encoder = Base64.getEncoder
-//
-//  def cursorValue(forRecord:Json, forIndex:Int) = (forRecord \\ "sort").headOption match {
-//    case Some(sort)=>
-//      logger.debug(s"got Sort param for record: ${sort.noSpaces}")
-//      //see https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html - only works if there is a `sort[]` field
-//      encoder.encodeToString(sort.noSpaces.getBytes(StandardCharsets.UTF_8))
-//    case None=>
-//      //logger.debug(s"got no Sort param in record: ${forRecord.noSpaces}")
-//      val jsonContent = Json.obj("sortType"->Json.fromString("index"),"index"->Json.fromInt(forIndex))
-//      encoder.encodeToString(jsonContent.noSpaces.getBytes(StandardCharsets.UTF_8))
-//  }
+  private val decoder = Base64.getDecoder
 
   def cursorValue(forRecord:SearchHit):Option[String] = {
     cursorValue(forRecord.sort)
@@ -46,5 +37,16 @@ object Edge {
       }): _*))
       encoded = encoder.encodeToString(json.noSpaces.getBytes(StandardCharsets.UTF_8))
     } yield encoded
+  }
+
+  def decodeCursor(cursor:Option[String]):Seq[Any] = cursor match {
+    case Some(value)=>
+      for {
+        decoded <- Try { decoder.decode(value) }.toEither.left.map(_.getMessage)
+        parsed <- io.circe.parser.parse( new String(decoded)).left.map(_.getMessage())
+        result <- if(parsed.isArray) {
+          parsed.
+        } else Nil
+      } yield parsed.
   }
 }

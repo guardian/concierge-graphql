@@ -67,13 +67,15 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
-  override def docsByWebTitle(webTitle: String, orderDate:Option[String], orderBy:Option[SortOrder], limit:Option[Int]): Future[Edge[Json]] = {
+  override def docsByWebTitle(webTitle: String, orderDate:Option[String], orderBy:Option[SortOrder], limit:Option[Int], cursor:Option[String]): Future[Edge[Json]] = {
     val pageSize = limit.getOrElse(defaultPageSize)
+
     client.execute {
       search("content")
         .query(MatchQuery("webTitle", webTitle))
         .sortBy(defaultingSortParam(orderDate, orderBy))
         .limit(pageSize)
+        .searchAfter(Edge.decodeCursor(cursor))
     }.flatMap(response=>{
       if(response.isSuccess) {
         logger.debug(s"webTitle query $webTitle returned ${response.result.hits} results")
