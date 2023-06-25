@@ -82,7 +82,7 @@ object Content extends SchemaDefinition with CirceHelpers {
               ctx.ctx.docById (contentId)
             case (_, Some(webTitle))=>
               ctx.ctx
-                .docsByWebTitle(webTitle, ctx arg OrderDate, ctx arg OrderBy, ctx arg Limit)
+                .docsByWebTitle(webTitle, ctx arg OrderDate, ctx arg OrderBy, ctx arg Limit, ctx arg Cursor)
             case _=>
               throw new RuntimeException("No fields given to search on")
           }

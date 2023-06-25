@@ -39,14 +39,47 @@ object Edge {
     } yield encoded
   }
 
-  def decodeCursor(cursor:Option[String]):Seq[Any] = cursor match {
+  /**
+   * Why the hell do we need to do this? It's because elastic4s expects a `Seq[Any]` as its cursor value,
+   * which is not particularly useful to us :(
+   * @param from
+   * @return
+   */
+  def decodeToAny(from:Json):Any = {
+    (from.asNumber, from.asString, from.asBoolean) match {
+      case (Some(n), _, _)=>
+        (n.toLong, n.toInt, n.toBigInt, n.toDouble) match {
+          case (Some(long), _, _, _)=>
+            long
+          case (_, Some(int), _, _) =>
+            int
+          case (_, _, Some(bigint), _) =>
+            bigint
+          case (_, _, _, double)=>
+            double
+        }
+      case (_, Some(s), _)=>
+        s
+      case (_, _, b)=>
+        b
+    }
+  }
+
+  def btos(from:Array[Byte]) = new String(from)
+
+  def decodeCursor(cursor:Option[String]):Either[String, Seq[Any]] = cursor match {
     case Some(value)=>
       for {
-        decoded <- Try { decoder.decode(value) }.toEither.left.map(_.getMessage)
-        parsed <- io.circe.parser.parse( new String(decoded)).left.map(_.getMessage())
-        result <- if(parsed.isArray) {
-          parsed.
-        } else Nil
-      } yield parsed.
+        decoded <- Try { new String(decoder.decode(value)) }.toEither.left.map(_.getMessage)
+        parsed <- io.circe.parser.parse(decoded).left.map(_.getMessage())
+        result = parsed.asArray match {
+          case Some(arr)=>
+            arr.map(decodeToAny)
+          case _=>
+            Nil
+        }
+      } yield result
+    case None=>
+      Right(Nil)
   }
 }
