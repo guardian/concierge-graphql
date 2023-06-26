@@ -3,7 +3,7 @@ name: Build and upload
 on: [push]
 
 jobs:
-  apple-news:
+  concierge-graphql:
     runs-on: ubuntu-latest
 
     # The first two permissions are needed to interact with GitHub's OIDC Token endpoint.
