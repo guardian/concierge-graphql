@@ -70,19 +70,29 @@ export class ConciergeGraphql extends GuStack {
       vpc,
     });
 
-    //Note - this SG will need to be manually added to the incoming rules of the appropriate ES instance to allow contact
-    app.autoScalingGroup.addSecurityGroup(new GuSecurityGroup(this, "ESAccess", {
-      app: "concierge-graphql",
-      description: "Allow access to Elasticsearch",
-      vpc,
-      egresses: [
-        {
-          range: Peer.ipv4("10.0.0.0/24"),
-          port: Port.tcp(9200),
-          description: "Allow outgoing to Elasticsearch data port"
-        }
-      ]
-    }))
+    const elasticsearchSGID = new GuParameter(this, "ESConnectionID", {
+      description: "Security group ID for the elasticsearch cluster to connect to",
+      default: `/${this.stage}/${this.stack}/elasticsearch/securityGroupId`,
+      fromSSM: true,
+      type: "String"
+    });
+    const elasticsearchSG = GuSecurityGroup.fromSecurityGroupId(this, "ESConnectionSG", elasticsearchSGID.valueAsString);
+
+    app.autoScalingGroup.connections.allowTo(elasticsearchSG, Port.tcp(9200), "Allow connection to Elasticsearch")
+    // //Note - this SG will need to be manually added to the incoming rules of the appropriate ES instance to allow contact
+    // app.autoScalingGroup.connections.addSecurityGroup(new GuSecurityGroup(this, "ESAccess", {
+    //   app: "concierge-graphql",
+    //   description: "Allow access to Elasticsearch",
+    //   vpc,
+    //   allowAllOutbound: false,
+    //   egresses: [
+    //     {
+    //       range: Peer.ipv4("10.0.0.0/24"),
+    //       port: Port.tcp(9200),
+    //       description: "Allow outgoing to Elasticsearch data port"
+    //     }
+    //   ]
+    // }))
   }
 
   getAccountPath(scope:GuStack, isPreview:boolean, elementName: string) {

@@ -23,6 +23,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "GuApplicationTargetGroup",
       "GuHttpsApplicationListener",
       "GuSecurityGroup",
+      "GuParameter",
     ],
     "gu:cdk:version": "TEST",
   },
@@ -45,6 +46,11 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     "DistributionBucketName": {
       "Default": "/account/services/artifact.bucket",
       "Description": "SSM parameter containing the S3 bucket name holding distribution artifacts",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "ESConnectionID": {
+      "Default": "/TEST/content-api/elasticsearch/securityGroupId",
+      "Description": "Security group ID for the elasticsearch cluster to connect to",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
     "LoggingStreamName": {
@@ -199,6 +205,42 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "ESConnectionSGfromConciergeGraphqlGuHttpsEgressSecurityGroupConciergegraphqlB7AB0DFB9200500A33B0": {
+      "Properties": {
+        "Description": "Allow connection to Elasticsearch",
+        "FromPort": 9200,
+        "GroupId": {
+          "Ref": "ESConnectionID",
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "GuHttpsEgressSecurityGroupConciergegraphql1855BF47",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9200,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "ESConnectionSGfromConciergeGraphqlWazuhSecurityGroup1681144A9200578350DD": {
+      "Properties": {
+        "Description": "Allow connection to Elasticsearch",
+        "FromPort": 9200,
+        "GroupId": {
+          "Ref": "ESConnectionID",
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "WazuhSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9200,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
     "GetDistributablePolicyConciergegraphql510C52ED": {
       "Properties": {
         "PolicyDocument": {
@@ -312,6 +354,24 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         "ToPort": 9000,
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "GuHttpsEgressSecurityGroupConciergegraphqltoConciergeGraphqlESConnectionSGF5E853FF92005FA2632E": {
+      "Properties": {
+        "Description": "Allow connection to Elasticsearch",
+        "DestinationSecurityGroupId": {
+          "Ref": "ESConnectionID",
+        },
+        "FromPort": 9200,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "GuHttpsEgressSecurityGroupConciergegraphql1855BF47",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 9200,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
     },
     "GuLogShippingPolicy981BFE5A": {
       "Properties": {
@@ -833,6 +893,24 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         "ToPort": 9000,
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "WazuhSecurityGrouptoConciergeGraphqlESConnectionSGF5E853FF9200A9202801": {
+      "Properties": {
+        "Description": "Allow connection to Elasticsearch",
+        "DestinationSecurityGroupId": {
+          "Ref": "ESConnectionID",
+        },
+        "FromPort": 9200,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "WazuhSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "ToPort": 9200,
+      },
+      "Type": "AWS::EC2::SecurityGroupEgress",
     },
     "contentapiTESTconciergegraphqlAFB69E52": {
       "Properties": {
