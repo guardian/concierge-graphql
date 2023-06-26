@@ -29,8 +29,7 @@ object Content extends SchemaDefinition with CirceHelpers {
         description = Some("A blog format that constantly updates")),
       EnumValue("gallery",
         value="gallery",
-        description = Some("A gallery of pictures")
-      )
+        description = Some("A gallery of pictures aka slideshow"))
     )
   )
 
@@ -46,7 +45,12 @@ object Content extends SchemaDefinition with CirceHelpers {
       Field("score", OptionType(FloatType), Some("The relevancy score of this hit to the query which you made"), resolve= ctx=> docScore.getOption(ctx.value)),
       Field("id", OptionType(StringType), Some("The content api ID (path)"), resolve = (ctx)=> docId.getOption(ctx.value).get),
       Field("type", OptionType(ContentTypeEnum), Some("What type of content is this document"), resolve = ctx => getString(ctx, "type")),
-      Field("alternateIds", ListType(StringType), Some("Alternate IDs for this article"), resolve = ctx => altIds.getAll(ctx.value)),
+      Field("alternateIds",
+        ListType(StringType),
+        Some("Alternate IDs for this article"),
+        arguments = anotherschema.query.AlternateIdParameters.AllAlternateIdParameters,
+        resolve = ctx => anotherschema.query.AlternateIdParameters.filterIds(altIds.getAll(ctx.value), ctx arg anotherschema.query.AlternateIdParameters.ParameterTypeId)
+      ),
       Field("webTitle", OptionType(StringType),
         Some("The title of the document, for web purposes. Normally (but not always) the same as the headline"),
         resolve = ctx => getString(ctx, "webTitle")
