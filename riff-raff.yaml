@@ -8,8 +8,8 @@ deployments:
       - content-api
     parameters:
       templateStagePaths:
-        CODE: ConciergeGraphql-CODE-AARDVARK.template.json
-        PROD: ConciergeGraphql-PROD-AARDVARK.template.json
+        CODE-AARDVARK: ConciergeGraphql-CODE-AARDVARK.template.json
+        PROD-AARDVARK: ConciergeGraphql-PROD-AARDVARK.template.json
       amiParameter: AMIConciergegraphql
       amiEncrypted: true
       amiTags:
@@ -23,8 +23,8 @@ deployments:
       - content-api-preview
     parameters:
       templateStagePaths:
-        CODE: ConciergeGraphql-preview-CODE-AARDVARK.template.json
-        PROD: ConciergeGraphql-preview-PROD-AARDVARK.template.json
+        CODE-AARDVARK: ConciergeGraphql-preview-CODE-AARDVARK.template.json
+        PROD-AARDVARK: ConciergeGraphql-preview-PROD-AARDVARK.template.json
       amiParameter: AMIConciergegraphql
       amiEncrypted: true
       amiTags:
@@ -33,6 +33,9 @@ deployments:
         BuiltBy: amigo
   concierge-graphql:
     type: autoscaling
+    stacks:
+      - content-api
+      - content-api-preview
     parameters:
       bucketSsmLookup: true
     dependencies: [ cloudformation, cloudformation-preview ]
