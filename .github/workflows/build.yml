@@ -1,6 +1,9 @@
 name: Build and upload
 
-on: [push]
+on:
+  push:
+    branchs: ["main"]
+  workflow_dispatch: {}
 
 jobs:
   concierge-graphql:
@@ -70,9 +73,11 @@ jobs:
             concierge-graphql:
               - target/concierge-graphql_0.1.0_all.deb
             cloudformation:
-              - cdk/cdk.out/ConciergeGraphql-PROD.template.json
-              - cdk/cdk.out/ConciergeGraphql-CODE.template.json
-
+              - cdk/cdk.out/ConciergeGraphql-PROD-AARDVARK.template.json
+              - cdk/cdk.out/ConciergeGraphql-CODE-AARDVARK.template.json
+            cloudformation-preview:
+              - cdk/cdk.out/ConciergeGraphql-preview-PROD-AARDVARK.template.json
+              - cdk/cdk.out/ConciergeGraphql-preview-CODE-AARDVARK.template.json
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()  #runs even if there is a test failure
