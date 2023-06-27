@@ -61,10 +61,13 @@ export class ConciergeGraphql extends GuStack {
         minimumInstances: 2,
         maximumInstances: 4,
       },
+      applicationLogging: {
+        enabled: true,
+      },
       userData: {
         distributable: {
           fileName: "concierge-graphql_0.1.0_all.deb",
-          executionStatement: "dpkg -i concierge-graphql_0.1.0_all.deb"
+          executionStatement: "dpkg -i concierge-graphql/concierge-graphql_0.1.0_all.deb"
         }
       },
       vpc,

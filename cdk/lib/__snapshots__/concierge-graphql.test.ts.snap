@@ -118,6 +118,11 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
             "PropagateAtLaunch": true,
             "Value": "TEST",
           },
+          {
+            "Key": "SystemdUnit",
+            "PropagateAtLaunch": true,
+            "Value": "concierge-graphql.service",
+          },
         ],
         "TargetGroupARNs": [
           {
@@ -930,7 +935,7 @@ aws s3 cp 's3://",
                     "Ref": "DistributionBucketName",
                   },
                   "/content-api/TEST/concierge-graphql/concierge-graphql_0.1.0_all.deb' '/concierge-graphql/concierge-graphql_0.1.0_all.deb'
-dpkg -i concierge-graphql_0.1.0_all.deb",
+dpkg -i concierge-graphql/concierge-graphql_0.1.0_all.deb",
                 ],
               ],
             },
