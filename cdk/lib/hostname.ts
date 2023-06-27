@@ -1,13 +1,13 @@
 import {GuStack} from "@guardian/cdk/lib/constructs/core";
 
 export function getHostName(scope:GuStack):string {
-    if(scope.stage=="CODE") {
+    if(scope.stage.startsWith("CODE")) {
         if(scope.stack.endsWith("preview")) {
             return "concierge-graphql-preview.capi.code.dev-gutools.co.uk";
         } else {
             return "concierge-graphql.capi.code.dev-gutools.co.uk";
         }
-    } else if(scope.stage=="PROD") {
+    } else if(scope.stage.startsWith("PROD")) {
         if (scope.stack.endsWith("preview")) {
             return "concierge-graphql-preview.capi.gutools.co.uk";
         } else {

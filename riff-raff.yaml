@@ -1,15 +1,30 @@
-stacks:
-  - content-api
 regions:
   - eu-west-1
 deployments:
   cloudformation:
     type: cloud-formation
     app: concierge-graphql
+    stacks:
+      - content-api
     parameters:
       templateStagePaths:
-        CODE: ConciergeGraphql-CODE.template.json
-        PROD: ConciergeGraphql-PROD.template.json
+        CODE: ConciergeGraphql-CODE-AARDVARK.template.json
+        PROD: ConciergeGraphql-PROD-AARDVARK.template.json
+      amiParameter: AMIConciergegraphql
+      amiEncrypted: true
+      amiTags:
+        Recipe: ubuntu-focal-capi-arm-jdk11
+        AmigoStage: PROD
+        BuiltBy: amigo
+  cloudformation-preview:
+    type: cloud-formation
+    app: concierge-graphql
+    stacks:
+      - content-api-preview
+    parameters:
+      templateStagePaths:
+        CODE: ConciergeGraphql-preview-CODE-AARDVARK.template.json
+        PROD: ConciergeGraphql-preview-PROD-AARDVARK.template.json
       amiParameter: AMIConciergegraphql
       amiEncrypted: true
       amiTags:
@@ -20,4 +35,4 @@ deployments:
     type: autoscaling
     parameters:
       bucketSsmLookup: true
-    dependencies: [ cloudformation ]
+    dependencies: [ cloudformation, cloudformation-preview ]
