@@ -139,10 +139,10 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     "CertificateConciergegraphqlC301CD47": {
       "DeletionPolicy": "Retain",
       "Properties": {
-        "DomainName": "concierge-graphql-preview.capi.code.dev-gutools.co.uk",
+        "DomainName": "concierge-graphql-preview.content.code.dev-guardianapis.com",
         "DomainValidationOptions": [
           {
-            "DomainName": "concierge-graphql-preview.capi.code.dev-gutools.co.uk",
+            "DomainName": "concierge-graphql-preview.content.code.dev-guardianapis.com",
             "HostedZoneId": {
               "Ref": "SsmParameterValueaccountservicescapigutoolsTESThostedzoneidC96584B6F00A464EAD1953AFF4B05118Parameter",
             },
