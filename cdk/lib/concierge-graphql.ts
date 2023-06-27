@@ -70,15 +70,21 @@ export class ConciergeGraphql extends GuStack {
       vpc,
     });
 
-    const elasticsearchSGID = new GuParameter(this, "ESConnectionID", {
-      description: "Security group ID for the elasticsearch cluster to connect to",
-      default: `/${this.stage}/${this.stack}/elasticsearch/securityGroupId`,
-      fromSSM: true,
-      type: "String"
-    });
-    const elasticsearchSG = GuSecurityGroup.fromSecurityGroupId(this, "ESConnectionSG", elasticsearchSGID.valueAsString);
+    //OK - so this is a good idea and should really be in here. But it's damn fiddly so leaving it out for now.
+    //The idea is we need a connection to the relevant Elasticsearch instance. So, we define a "connection" (which basically
+    //to an egress rule) on our SG which allows egress to the remote ES SG. You still manually need to add a rule on the relevant
+    //remove Elasticsearch SG to allow ingress from us.
+    //Because there is still a manual stage, I'm going to leave it as manual for now, and leave the code here for reference.
 
-    app.autoScalingGroup.connections.allowTo(elasticsearchSG, Port.tcp(9200), "Allow connection to Elasticsearch")
+    // const elasticsearchSGID = new GuParameter(this, "ESConnectionID", {
+    //   description: "Security group ID for the elasticsearch cluster to connect to",
+    //   default: `/${this.stage}/${this.stack}/elasticsearch/securityGroupId`,
+    //   fromSSM: true,
+    //   type: "String"
+    // });
+    // const elasticsearchSG = GuSecurityGroup.fromSecurityGroupId(this, "ESConnectionSG", elasticsearchSGID.valueAsString);
+    //
+    // app.autoScalingGroup.connections.allowTo(elasticsearchSG, Port.tcp(9200), "Allow connection to Elasticsearch")
     // //Note - this SG will need to be manually added to the incoming rules of the appropriate ES instance to allow contact
     // app.autoScalingGroup.connections.addSecurityGroup(new GuSecurityGroup(this, "ESAccess", {
     //   app: "concierge-graphql",
