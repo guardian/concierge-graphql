@@ -35,6 +35,8 @@ object Main extends IOApp {
             InternalServerError(err.getMessage())
           })
       }
+    case GET -> Root / "healthcheck" =>
+      Ok("Instance healthy")
     case GET -> Root / "schema" / name =>
       server
         .getSchema(name)
