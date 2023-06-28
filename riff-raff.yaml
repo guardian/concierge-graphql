@@ -1,23 +1,41 @@
-stacks:
-  - content-api
 regions:
   - eu-west-1
 deployments:
-#  cloudformation:
-#    type: cloud-formation
-#    app: apple-news
-#    parameters:
-#      templateStagePaths:
-#        CODE: AppleNews-CODE.template.json
-#        PROD: AppleNews-PROD.template.json
-#      amiParameter: AMIApplenews
-#      amiEncrypted: true
-#      amiTags:
-#        Recipe: ubuntu-focal-capi-arm-jdk11
-#        AmigoStage: PROD
-#        BuiltBy: amigo
+  cloudformation:
+    type: cloud-formation
+    app: concierge-graphql
+    stacks:
+      - content-api
+    parameters:
+      templateStagePaths:
+        CODE-AARDVARK: ConciergeGraphql-CODE-AARDVARK.template.json
+        PROD-AARDVARK: ConciergeGraphql-PROD-AARDVARK.template.json
+      amiParameter: AMIConciergegraphql
+      amiEncrypted: true
+      amiTags:
+        Recipe: ubuntu-focal-capi-arm-jdk11
+        AmigoStage: PROD
+        BuiltBy: amigo
+  cloudformation-preview:
+    type: cloud-formation
+    app: concierge-graphql
+    stacks:
+      - content-api-preview
+    parameters:
+      templateStagePaths:
+        CODE-AARDVARK: ConciergeGraphql-preview-CODE-AARDVARK.template.json
+        PROD-AARDVARK: ConciergeGraphql-preview-PROD-AARDVARK.template.json
+      amiParameter: AMIConciergegraphql
+      amiEncrypted: true
+      amiTags:
+        Recipe: ubuntu-focal-capi-arm-jdk11
+        AmigoStage: PROD
+        BuiltBy: amigo
   concierge-graphql:
     type: autoscaling
+    stacks:
+      - content-api
+      - content-api-preview
     parameters:
       bucketSsmLookup: true
-    dependencies: [ cloudformation ]
+    dependencies: [ cloudformation, cloudformation-preview ]

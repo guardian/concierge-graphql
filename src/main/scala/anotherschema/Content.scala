@@ -26,7 +26,11 @@ object Content extends SchemaDefinition with CirceHelpers {
         description = Some("A video, with minimal text content")),
       EnumValue("liveblog",
         value="liveblog",
-        description = Some("A blog format that constantly updates"))
+        description = Some("A blog format that constantly updates")),
+      EnumValue("gallery",
+        value="gallery",
+        description = Some("A gallery of pictures")
+      )
     )
   )
 

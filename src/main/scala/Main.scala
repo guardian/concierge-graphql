@@ -35,6 +35,8 @@ object Main extends IOApp {
             InternalServerError(err.getMessage())
           })
       }
+    case GET -> Root / "healthcheck" =>
+      Ok("Instance healthy")
     case GET -> Root / "schema" / name =>
       server
         .getSchema(name)
@@ -43,7 +45,7 @@ object Main extends IOApp {
 
   def run(args:List[String]):IO[ExitCode] = {
     val httpApp = Router("/" -> graphqlService).orNotFound
-    println("Starting up on 0.0.0.0 port 9000")
+    logger.info("Starting up on 0.0.0.0 port 9000")
     EmberServerBuilder
       .default[IO]
       .withHost(ipv4"0.0.0.0")
