@@ -29,8 +29,7 @@ object Content extends SchemaDefinition with CirceHelpers {
         description = Some("A blog format that constantly updates")),
       EnumValue("gallery",
         value="gallery",
-        description = Some("A gallery of pictures")
-      )
+        description = Some("A gallery of pictures aka slideshow"))
     )
   )
 
@@ -46,7 +45,12 @@ object Content extends SchemaDefinition with CirceHelpers {
       Field("score", OptionType(FloatType), Some("The relevancy score of this hit to the query which you made"), resolve= ctx=> docScore.getOption(ctx.value)),
       Field("id", OptionType(StringType), Some("The content api ID (path)"), resolve = (ctx)=> docId.getOption(ctx.value).get),
       Field("type", OptionType(ContentTypeEnum), Some("What type of content is this document"), resolve = ctx => getString(ctx, "type")),
-      Field("alternateIds", ListType(StringType), Some("Alternate IDs for this article"), resolve = ctx => altIds.getAll(ctx.value)),
+      Field("alternateIds",
+        ListType(StringType),
+        Some("Alternate IDs for this article"),
+        arguments = anotherschema.query.AlternateIdParameters.AllAlternateIdParameters,
+        resolve = ctx => anotherschema.query.AlternateIdParameters.filterIds(altIds.getAll(ctx.value), ctx arg anotherschema.query.AlternateIdParameters.ParameterTypeId)
+      ),
       Field("webTitle", OptionType(StringType),
         Some("The title of the document, for web purposes. Normally (but not always) the same as the headline"),
         resolve = ctx => getString(ctx, "webTitle")
@@ -55,6 +59,18 @@ object Content extends SchemaDefinition with CirceHelpers {
       Field("sectionId", OptionType(StringType), Some("Which section does this belong to"), resolve = ctx => getString(ctx,"sectionId")),
       Field("debug", OptionType(anotherschema.content.Debug.definition), Some("Internal debugging information"), resolve = ctx => (ctx.value \\ "debug").headOption),
       Field("blocks", anotherschema.content.Blocks.definition, None, resolve = ctx => (ctx.value \\ "blocks").head),
+      Field("cursor", OptionType(StringType), Some("Cursor for pagination"), resolve = ctx => getString(ctx, "cursor"))
+    )
+  )
+
+  val edge:ObjectType[Unit, Edge[Json]] = ObjectType(
+    "ArticleEdge",
+    "A list of articles with pagination features",
+    ()=> fields[Unit, Edge[Json]](
+      Field("totalCount", LongType, Some("Total number of results that match your query"), resolve= _.value.totalCount),
+      Field("endCursor", OptionType(StringType), Some("The last record cursor in the set"), resolve = _.value.endCursor),
+      Field("hasNextPage", BooleanType, Some("Whether there are any more records to retrieve"), resolve = _.value.hasNextPage),
+      Field("nodes", ListType(definition), Some("The actual content returned"), resolve = _.value.nodes)
     )
   )
 
@@ -62,7 +78,7 @@ object Content extends SchemaDefinition with CirceHelpers {
 
   val Query = ObjectType[DocumentRepo, Unit](
     "Query", fields[DocumentRepo, Unit](
-      Field("article", ListType(definition),
+      Field("article", edge,
         arguments = AllContentQueryParameters,
         resolve = ctx=>
           (ctx arg ContentIdArg, ctx arg WebTitleArg) match {
@@ -70,7 +86,7 @@ object Content extends SchemaDefinition with CirceHelpers {
               ctx.ctx.docById (contentId)
             case (_, Some(webTitle))=>
               ctx.ctx
-                .docsByWebTitle(webTitle, ctx arg OrderDate, ctx arg OrderBy)
+                .docsByWebTitle(webTitle, ctx arg OrderDate, ctx arg OrderBy, ctx arg Limit, ctx arg Cursor)
             case _=>
               throw new RuntimeException("No fields given to search on")
           }
