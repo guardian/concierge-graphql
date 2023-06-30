@@ -1,6 +1,9 @@
 package thriftparser
 
-import "testing"
+import (
+	"regexp"
+	"testing"
+)
 
 func TestParseInElementLineNoElement(t *testing.T) {
 	state := ParserState{
@@ -106,5 +109,38 @@ func TestParseClosingInElementLine(t *testing.T) {
 	}
 	if more {
 		t.Errorf("parsing a closing line should signal no more object")
+	}
+}
+
+func TestParseOutOfElementLineNS(t *testing.T) {
+	state := ParserState{
+		namespaces:     make(map[string]string, 0),
+		currentElement: nil,
+		isInComment:    false,
+	}
+
+	doc := ThriftDocumentImpl{elements: make([]ThriftElement, 0)}
+
+	whitespace := regexp.MustCompile("\\s+")
+	err := parseOutOfElementLine(&state, &doc, "namespace scala  com.gu.contentapi.client.model.v1", whitespace)
+	if err != nil {
+		t.Error("received an unexpected error parsing a namespace entry", err)
+		t.FailNow()
+	}
+
+	if len(state.namespaces) == 0 {
+		t.Error("got no namespace entry after parsing line")
+	} else {
+		if ns, haveNs := state.namespaces["scala"]; haveNs {
+			if ns != "com.gu.contentapi.client.model.v1" {
+				t.Error("got incorrect namespace loaded ", ns)
+			}
+		} else {
+			t.Error("parsed in a namespace but with the wrong id")
+		}
+	}
+
+	if state.currentElement != nil {
+		t.Error("currentElement should not be changed after parsing namespace")
 	}
 }

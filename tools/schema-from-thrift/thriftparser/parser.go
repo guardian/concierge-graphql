@@ -98,6 +98,7 @@ func parseOutOfElementLine(state *ParserState, doc *ThriftDocumentImpl, line str
 	}
 	return nil
 }
+
 func Parse(from io.Reader) (ThriftDocument, error) {
 	isEmpty := regexp.MustCompile("^\\s*$")
 	isComment := regexp.MustCompile("^\\s/+")
