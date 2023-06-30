@@ -32,11 +32,9 @@ func parseInElementLine(state *ParserState, line string) (bool, error) {
 		if elem, isStruct := state.currentElement.(*ThriftStructImpl); isStruct {
 			parts := structEntry.FindAllStringSubmatch(line, -1)
 			indexNum, _ := strconv.ParseInt(parts[0][1], 10, 32)
-			newField := &ThriftFieldPrimitive{ //FIXME: not necessarily a primitive!
-				dataType:  parts[0][3],
-				fieldName: parts[0][4],
-				index:     int(indexNum),
-				optional:  parts[0][2] != "required",
+			newField, err := NewThriftField(parts[0][4], parts[0][3], parts[0][2] != "required", int(indexNum))
+			if err != nil {
+				return false, err
 			}
 			elem.fields = append(elem.fields, newField)
 			return true, nil
