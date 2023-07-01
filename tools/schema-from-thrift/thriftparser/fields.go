@@ -3,6 +3,7 @@ package thriftparser
 import (
 	"errors"
 	"fmt"
+	"log"
 	"regexp"
 )
 
@@ -13,6 +14,7 @@ func isPrimitive(dataType string) bool {
 		"i8",
 		"i16",
 		"i32",
+		"i64",
 	}
 
 	for _, t := range knownPrimitives {
@@ -42,7 +44,10 @@ func NewThriftField(fieldName string, dataType string, isOptional bool, index in
 	subXtractor := regexp.MustCompile("^(\\w+)<([\\w\\s,<>]+)>$")
 	parts := subXtractor.FindAllStringSubmatch(dataType, -1)
 
+	//log.Printf("DEBUG\tfound field %s %s %v %d", fieldName, dataType, isOptional, index)
+
 	if parts != nil {
+		//log.Printf("DEBUG\tfound a composite type")
 		slotCount, isC := isContainer(parts[0][1])
 		if !isC {
 			return nil, errors.New(fmt.Sprintf("found subfields %s requested on non-container type %s", parts[0][2], parts[0][1]))
@@ -76,6 +81,7 @@ func NewThriftField(fieldName string, dataType string, isOptional bool, index in
 			optional:  isOptional,
 		}, nil
 	} else if isPrimitive(dataType) {
+		//log.Printf("DEBUG\tfound a primitive type")
 		return &ThriftFieldPrimitive{
 			dataType,
 			fieldName,
@@ -83,6 +89,8 @@ func NewThriftField(fieldName string, dataType string, isOptional bool, index in
 			isOptional,
 		}, nil
 	} else {
-		return nil, errors.New("custom field types not implemented yet")
+		log.Print("WARNING \"custom field types not implemented yet\"")
+		return nil, nil
+		//return nil, errors.New("custom field types not implemented yet")
 	}
 }

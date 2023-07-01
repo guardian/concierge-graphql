@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"io"
+	"log"
 	"regexp"
 	"strconv"
 )
@@ -19,7 +19,7 @@ type ParserState struct {
 //parseInElementLine reads a line when we know we are inside an element
 //returns 'true' if the element continues or 'false' if it is ending
 func parseInElementLine(state *ParserState, line string) (bool, error) {
-	structEntry := regexp.MustCompile("^\\s*(\\d+):\\s*(required|optional)\\s*(\\w+)\\s*(\\w+)(\\s*=\\s*\\w+)*")
+	structEntry := regexp.MustCompile("^\\s*(\\d+):\\s*(required|optional)*\\s*(\\w+)\\s*(\\w+)(\\s*=\\s*\\w+)*")
 	enumEntry := regexp.MustCompile("^\\s*(\\w+)\\s*=\\s*(\\d+),*")
 	blankLine := regexp.MustCompile("^\\s*$")
 	elemEnd := regexp.MustCompile("^\\s*}")
@@ -27,6 +27,7 @@ func parseInElementLine(state *ParserState, line string) (bool, error) {
 	if blankLine.MatchString(line) {
 		return true, nil
 	} else if elemEnd.MatchString(line) {
+		//log.Printf("DEBUG parseInElementLine matched end-of-object")
 		return false, nil
 	} else if structEntry.MatchString(line) {
 		if elem, isStruct := state.currentElement.(*ThriftStructImpl); isStruct {
@@ -55,7 +56,7 @@ func parseInElementLine(state *ParserState, line string) (bool, error) {
 			return false, errors.New("this line defines an enum field but not inside an enum")
 		}
 	} else {
-		return false, errors.New("this line was not recognised")
+		return true, errors.New("this line was not recognised")
 	}
 }
 
@@ -63,7 +64,7 @@ func parseOutOfElementLine(state *ParserState, doc *ThriftDocumentImpl, line str
 	var err error
 	words := whitespace.Split(line, -1)
 	quoteStripper := regexp.MustCompile(`^include\s*"(.*)"$`)
-	spew.Dump(words)
+	//spew.Dump(words)
 	if len(words) < 2 {
 		return nil
 	}
@@ -113,6 +114,8 @@ func Parse(from io.Reader, docName string) (ThriftDocument, error) {
 	commentEnd := regexp.MustCompile("\\*/")
 	blockCommentStart := regexp.MustCompile("/\\*")
 	whitespace := regexp.MustCompile("\\s+")
+	inlineCommentStripper := regexp.MustCompile(`//.*$`)
+
 	state := ParserState{
 		namespaces: make(map[string]string, 0),
 	}
@@ -130,11 +133,22 @@ func Parse(from io.Reader, docName string) (ThriftDocument, error) {
 	for s.Scan() {
 		lineCounter++
 
+		line := inlineCommentStripper.ReplaceAllString(s.Text(), "")
+
 		//if we are in an empty line or a line that only contains a comment then continue
-		if isEmpty.MatchString(s.Text()) || isComment.MatchString(s.Text()) {
+		if isEmpty.MatchString(line) || isComment.MatchString(line) {
 			continue
-		} else if state.isInComment {
-			if commentEnd.MatchString(s.Text()) {
+		}
+
+		if blockCommentStart.MatchString(line) {
+			if !commentEnd.MatchString(line) { //if the comment ends on the same line, then don't enter comment state
+				state.isInComment = true
+			}
+			continue
+		}
+
+		if state.isInComment {
+			if commentEnd.MatchString(line) {
 				state.isInComment = false
 				continue
 			}
@@ -142,25 +156,24 @@ func Parse(from io.Reader, docName string) (ThriftDocument, error) {
 
 		//if we are parsing in an element at the moment then look for in-element lines
 		if state.currentElement != nil && !state.isInComment {
-			shouldEndElem, err := parseInElementLine(&state, s.Text())
+			elemContinues, err := parseInElementLine(&state, line)
 			if err != nil {
-				return nil, errors.New(fmt.Sprintf("Parsing error at line %d: %s", lineCounter, err))
+				log.Printf("DEBUG %d: %v %v '%s'", lineCounter, state.isInComment, state.currentElement != nil, line)
+				return nil, errors.New(fmt.Sprintf("ERROR arsing error at line %d: %s", lineCounter, err))
 			}
-			if shouldEndElem {
+			if !elemContinues {
+				//log.Printf("DEBUG line %d is end of element", lineCounter)
 				state.currentElement = nil
 			}
 			continue
 		}
 
 		//otherwise look for root lines, by tokenising on spaces
-		err = parseOutOfElementLine(&state, doc, s.Text(), whitespace)
+		err = parseOutOfElementLine(&state, doc, line, whitespace)
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf("Line %d: %s", lineCounter, err))
 		}
 
-		if blockCommentStart.MatchString(s.Text()) {
-			state.isInComment = true
-		}
 	}
 	return doc, nil
 }

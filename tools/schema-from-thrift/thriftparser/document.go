@@ -17,7 +17,7 @@ type ThriftDocument interface {
 	//HasUnresolvedIncludes returns true if there are any included files that have not yet been resolved
 	HasUnresolvedIncludes() bool
 	//ResolveIncludes will load in the content for all included documents which have not yet been loaded. Call this or ResolvedIncludes() won't work.
-	ResolveIncludes(basePath string) error
+	ResolveIncludes(basePath string) []error
 }
 
 type ThriftDocumentImpl struct {
@@ -54,7 +54,8 @@ func (d *ThriftDocumentImpl) HasUnresolvedIncludes() bool {
 	return false
 }
 
-func (d *ThriftDocumentImpl) ResolveIncludes(basePath string) error {
+func (d *ThriftDocumentImpl) ResolveIncludes(basePath string) []error {
+	problems := make([]error, 0)
 	for fileName, content := range d.includes {
 		if content != nil {
 			continue
@@ -71,9 +72,9 @@ func (d *ThriftDocumentImpl) ResolveIncludes(basePath string) error {
 			return Parse(fp, fileName)
 		}()
 		if err != nil {
-			return err
+			problems = append(problems, err)
 		}
 		d.includes[fileName] = doc
 	}
-	return nil
+	return problems
 }

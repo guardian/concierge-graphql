@@ -33,9 +33,12 @@ func main() {
 		} else {
 			realDir = dir
 		}
-		loadErr := doc.ResolveIncludes(realDir)
-		if loadErr != nil {
-			log.Fatalf("ERROR Could not load included docs from %s: %s", realDir, loadErr)
+		loadErrs := doc.ResolveIncludes(realDir)
+		if len(loadErrs) > 0 {
+			for _, err := range loadErrs {
+				log.Printf("WARNING Could not load included docs from %s: %s", realDir, err)
+			}
 		}
 	}
+	//spew.Dump(doc)
 }
