@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/davecgh/go-spew/spew"
 	"log"
 	"os"
 	"path"
@@ -40,5 +41,10 @@ func main() {
 			}
 		}
 	}
-	//spew.Dump(doc)
+
+	doc.ResolveCustomFields(doc)
+	for _, d := range doc.ResolvedIncludes() {
+		doc.ResolveCustomFields(d)
+	}
+	spew.Dump(doc)
 }

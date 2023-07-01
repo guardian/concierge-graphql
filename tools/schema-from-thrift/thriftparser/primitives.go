@@ -34,3 +34,7 @@ func (f *ThriftFieldPrimitive) Index() int {
 func (f *ThriftFieldPrimitive) IsOptional() bool {
 	return f.optional
 }
+
+func (f *ThriftFieldPrimitive) ResolveCustomFields(against ThriftDocument) bool {
+	return true //resolving is a no-op on a primitive field
+}

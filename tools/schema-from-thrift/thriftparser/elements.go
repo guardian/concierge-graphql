@@ -22,6 +22,7 @@ type ThriftElementFields interface {
 	Index() int
 	//IsOptional returns true if the field is not marked as mandatory
 	IsOptional() bool
+	ResolveCustomFields(against ThriftDocument) bool
 }
 
 type ThriftElement interface {

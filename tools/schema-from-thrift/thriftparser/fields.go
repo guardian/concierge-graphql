@@ -3,7 +3,6 @@ package thriftparser
 import (
 	"errors"
 	"fmt"
-	"log"
 	"regexp"
 )
 
@@ -89,8 +88,12 @@ func NewThriftField(fieldName string, dataType string, isOptional bool, index in
 			isOptional,
 		}, nil
 	} else {
-		log.Print("WARNING \"custom field types not implemented yet\"")
-		return nil, nil
-		//return nil, errors.New("custom field types not implemented yet")
+		return &ThriftFieldCustom{
+			fieldName:    fieldName,
+			dataTypeName: dataType,
+			definition:   nil,
+			index:        index,
+			optional:     isOptional,
+		}, nil
 	}
 }

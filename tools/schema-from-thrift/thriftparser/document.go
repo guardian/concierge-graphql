@@ -16,8 +16,12 @@ type ThriftDocument interface {
 	ResolvedIncludes() []ThriftDocument
 	//HasUnresolvedIncludes returns true if there are any included files that have not yet been resolved
 	HasUnresolvedIncludes() bool
+	//HasUnresolvedCustomFields returns true if there are any included fields that have not yet been resolved
+	//HasUnresolvedCustomFields() bool
 	//ResolveIncludes will load in the content for all included documents which have not yet been loaded. Call this or ResolvedIncludes() won't work.
 	ResolveIncludes(basePath string) []error
+	//ResolveCustomFields resolves custom fields in this document against the other one listed (which can be the same doc)
+	ResolveCustomFields(against ThriftDocument) bool
 }
 
 type ThriftDocumentImpl struct {
@@ -77,4 +81,17 @@ func (d *ThriftDocumentImpl) ResolveIncludes(basePath string) []error {
 		d.includes[fileName] = doc
 	}
 	return problems
+}
+
+func (d *ThriftDocumentImpl) ResolveCustomFields(against ThriftDocument) bool {
+	allComplete := true
+	for _, i := range d.elements {
+		for _, f := range i.Fields() {
+			result := f.ResolveCustomFields(against)
+			if !result {
+				allComplete = false
+			}
+		}
+	}
+	return allComplete
 }

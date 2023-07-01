@@ -37,3 +37,16 @@ func (f *ThriftFieldContainer) Index() int {
 func (f *ThriftFieldContainer) IsOptional() bool {
 	return f.optional
 }
+
+func (f *ThriftFieldContainer) ResolveCustomFields(against ThriftDocument) bool {
+	didResolve := true
+	for _, slot := range f.slots {
+		if !slot.IsPrimitiveType() {
+			result := slot.ResolveCustomFields(against)
+			if !result {
+				didResolve = false
+			}
+		}
+	}
+	return didResolve
+}
