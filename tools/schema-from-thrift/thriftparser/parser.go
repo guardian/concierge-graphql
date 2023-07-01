@@ -62,6 +62,7 @@ func parseInElementLine(state *ParserState, line string) (bool, error) {
 func parseOutOfElementLine(state *ParserState, doc *ThriftDocumentImpl, line string, whitespace *regexp.Regexp) error {
 	var err error
 	words := whitespace.Split(line, -1)
+	quoteStripper := regexp.MustCompile(`^include\s*"(.*)"$`)
 	spew.Dump(words)
 	if len(words) < 2 {
 		return nil
@@ -75,6 +76,13 @@ func parseOutOfElementLine(state *ParserState, doc *ThriftDocumentImpl, line str
 			state.namespaces["default"] = words[1]
 		}
 		break
+	case "include":
+		parts := quoteStripper.FindAllStringSubmatch(line, -1)
+		if parts != nil {
+			doc.includes[parts[0][1]] = nil
+		} else {
+			return errors.New("include directive found without file to include")
+		}
 	case "struct":
 		if state.currentElement != nil {
 			return errors.New("unexpected start of an element")
@@ -99,16 +107,20 @@ func parseOutOfElementLine(state *ParserState, doc *ThriftDocumentImpl, line str
 	return nil
 }
 
-func Parse(from io.Reader) (ThriftDocument, error) {
+func Parse(from io.Reader, docName string) (ThriftDocument, error) {
 	isEmpty := regexp.MustCompile("^\\s*$")
 	isComment := regexp.MustCompile("^\\s/+")
 	commentEnd := regexp.MustCompile("\\*/")
 	blockCommentStart := regexp.MustCompile("/\\*")
 	whitespace := regexp.MustCompile("\\s+")
-	state := ParserState{}
+	state := ParserState{
+		namespaces: make(map[string]string, 0),
+	}
 
 	doc := &ThriftDocumentImpl{
+		docName:  docName,
 		elements: make([]ThriftElement, 0),
+		includes: make(map[string]ThriftDocument, 0),
 	}
 
 	s := bufio.NewScanner(from)
