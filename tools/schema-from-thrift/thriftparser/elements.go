@@ -16,6 +16,7 @@ type ThriftElementFields interface {
 	DataType() string
 	// DataTypeScala the scala data-type of this element
 	DataTypeScala() string
+	DataTypeJs() string
 	// FieldName gives the name of the field
 	FieldName() string
 	//Index gives the numeric index

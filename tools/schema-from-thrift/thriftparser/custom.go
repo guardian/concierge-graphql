@@ -1,5 +1,10 @@
 package thriftparser
 
+import (
+	"fmt"
+	"schema-from-thrift/utils"
+)
+
 type ThriftFieldCustom struct {
 	fieldName    string
 	dataTypeName string
@@ -21,7 +26,16 @@ func (f *ThriftFieldCustom) DataType() string {
 }
 
 func (f *ThriftFieldCustom) DataTypeScala() string {
-	panic("dataTypeScala not implemented yet")
+	t := utils.Capitalise(f.fieldName)
+	if f.optional {
+		return fmt.Sprintf("OptionalType(%s)", t)
+	} else {
+		return t
+	}
+}
+
+func (f *ThriftFieldCustom) DataTypeJs() string {
+	return "json"
 }
 
 func (f *ThriftFieldCustom) FieldName() string {

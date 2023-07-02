@@ -6,7 +6,7 @@ import io.circe.Json
 import io.circe.optics.JsonPath
 import org.slf4j.LoggerFactory
 import sangria.schema.{BooleanType, Field, ListType, ObjectType, OptionType, StringType, fields}
-
+import sangria.schema._
 object Body extends SchemaDefinition with CirceHelpers {
   override val definition: ObjectType[Unit, Json] = ObjectType(
     "body",
@@ -15,7 +15,7 @@ object Body extends SchemaDefinition with CirceHelpers {
       fields[Unit, Json](
         Field("id", OptionType(StringType), Some("ID of the block"), resolve=ctx=>getString(ctx, "id")),
         Field("title", OptionType(StringType), Some("Title of the block"), resolve=ctx=>getString(ctx, "title")),
-        //Field("attributes", OptionType(StringType), Some("Raw json attributes"), resolve = ctx => getString(ctx, "attributes")),
+        Field("attributes", OptionType(StringType), Some("Raw json attributes"), resolve = ctx => JsonPath.root.attributes.json.getOption(ctx.value).map(_.noSpaces)),
         Field("published", OptionType(BooleanType), Some("Has this been published?"), resolve = ctx => getBool(ctx, "published")),
         Field("createdDate", OptionType(StringType), Some("Timestamp that the block was created"), resolve = ctx => getString(ctx, "createdDate")),
         Field("firstPublishedDate", OptionType(StringType), Some("When was this first published?"), resolve = ctx => getString(ctx, "firstPublishedDate")),

@@ -1,5 +1,10 @@
 package thriftparser
 
+import (
+	"fmt"
+	"log"
+)
+
 type ThriftFieldContainer struct {
 	slotCount int
 	slotTypes []string
@@ -23,7 +28,22 @@ func (f *ThriftFieldContainer) DataType() string {
 }
 
 func (f *ThriftFieldContainer) DataTypeScala() string {
-	panic("dataTypeScala not implemented yet")
+	switch f.dataType {
+	case "list":
+		innerType := f.slots[1].DataTypeScala()
+		t := fmt.Sprintf("ListType(%s)", innerType)
+		if f.IsOptional() {
+			return fmt.Sprintf("OptionalType(%s)", t)
+		} else {
+			return t
+		}
+	case "map":
+		log.Printf("WARN Field %s is a map type but map types are not properly supported in GraphQL", f.fieldName)
+		return ""
+	default:
+		log.Printf("ERROR Field %s is of container type %s which is not implemented for Sangria yet", f.fieldName, f.dataType)
+		return ""
+	}
 }
 
 func (f *ThriftFieldContainer) FieldName() string {
@@ -36,6 +56,18 @@ func (f *ThriftFieldContainer) Index() int {
 
 func (f *ThriftFieldContainer) IsOptional() bool {
 	return f.optional
+}
+
+func (f *ThriftFieldContainer) DataTypeJs() string {
+	switch f.dataType {
+	case "list":
+		return "arr"
+	case "map":
+		return ""
+	default:
+		log.Printf("ERROR Field %s is of container type %s which is not implemented for Sangria yet", f.fieldName, f.dataType)
+		return ""
+	}
 }
 
 func (f *ThriftFieldContainer) ResolveCustomFields(against ThriftDocument) bool {
