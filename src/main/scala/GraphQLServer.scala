@@ -7,6 +7,7 @@ import org.http4s.dsl.io._
 import sangria.execution.Executor
 import sangria.renderer.SchemaRenderer
 import anotherschema.Content
+import com.gu.contentapi.porter.ElasticsearchDerivedSchema
 import datastore.DocumentRepo
 import sangria.marshalling.circe._
 import io.circe.syntax._
@@ -20,6 +21,7 @@ import scala.util.{Failure, Success}
 
 class GraphQLServer(documentRepo:DocumentRepo) {
   private val logger = LoggerFactory.getLogger(getClass)
+  private val inUseSchema = ElasticsearchDerivedSchema.schema //Content.ContentSchema
 
   private def parser(content:String) = Stream.apply(QueryParser.parse(content))
 
@@ -31,7 +33,7 @@ class GraphQLServer(documentRepo:DocumentRepo) {
   private def performQuery(doc:Document, variables:Option[Map[String,String]]) =
     IO.fromFuture(
       IO(
-        Executor.execute(Content.ContentSchema, doc, userContext = documentRepo).map(_.asJson.noSpaces)
+        Executor.execute(inUseSchema, doc, userContext = documentRepo).map(_.asJson.noSpaces)
       )
     )
     .map(body=>Ok(body))
@@ -62,7 +64,7 @@ class GraphQLServer(documentRepo:DocumentRepo) {
 
   def getSchema(schemaName:String) = schemaName match {
     case "content"=>
-      Ok(SchemaRenderer.renderSchema(Content.ContentSchema))
+      Ok(SchemaRenderer.renderSchema(inUseSchema))
     case _=>
       NotFound("Schema not found")
   }
