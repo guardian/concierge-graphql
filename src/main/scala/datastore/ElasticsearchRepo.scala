@@ -9,7 +9,7 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
-import com.sksamuel.elastic4s.requests.searches.queries.ExistsQuery
+import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, Query}
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.queries.matches.MatchQuery
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, ScoreSort, Sort, SortOrder}
@@ -142,19 +142,22 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
-  private def buildTagQuery(maybeTagId:Option[String], maybeSection:Option[String], tagType:Option[String]) = {
-    val base = search("tag")
-
-    val params = Seq(
+  private def tagQueryParams(maybeTagId:Option[String], maybeSection:Option[String], tagType:Option[String]):Seq[Query] = {
+    Seq(
       maybeTagId.map(MatchQuery("id", _)),
       maybeSection.map(MatchQuery("sectionId", _)),
       tagType.map({
-        case "podcast"=>
+        case "podcast" =>
           ExistsQuery("podcast")
-        case tp:String=>
+        case tp: String =>
           MatchQuery("type", tp)
       })
-    ).collect({case Some(param)=>param})
+    ).collect({ case Some(param) => param })
+  }
+  private def buildTagQuery(maybeTagId:Option[String], maybeSection:Option[String], tagType:Option[String]) = {
+    val base = search("tag")
+
+    val params = tagQueryParams(maybeTagId, maybeSection, tagType)
 
     if(params.isEmpty) {
       base
@@ -190,6 +193,39 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
         }.flatMap(handleResponseMultiple(_, pageSize)(tagTransform))
       case Left(err)=>
         Future.failed(new RuntimeException(s"Unable to decode cursor value $cursor: $err"))
+    }
+  }
+
+  override def tagsForList(tagIdList:Seq[String], maybeSection: Option[String], tagType:Option[String]):Future[Seq[Tag]] = {
+    val tagIdMatches = tagIdList.map(MatchQuery("id", _))
+
+    client.execute {
+      val restrictions = tagQueryParams(None, maybeSection, tagType)
+
+      if(restrictions.nonEmpty) {
+        search("tag").query(
+            BoolQuery(
+              must=restrictions :+ BoolQuery(should=tagIdMatches)
+            )
+          )
+      } else {
+        search("tag").query(BoolQuery(should=tagIdMatches))
+      }
+
+    } flatMap { response=>
+      if(response.isError) {
+        logger.error(s"Could not make query for tags ${tagIdList}: ${response.error}")
+        Future.failed(response.error.asException)
+      } else {
+        Future(response.result.hits.hits.map(hit=>
+          for {
+            rawResult <- RawResult(hit)
+            marshalledResult <- rawResult.content.as[Tag]
+          } yield marshalledResult
+        ))
+          .map(_.collect({case Right(tag)=>tag}))
+          .map(_.toSeq)
+      }
     }
   }
 }

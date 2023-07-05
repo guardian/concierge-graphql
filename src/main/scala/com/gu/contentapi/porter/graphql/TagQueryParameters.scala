@@ -100,4 +100,6 @@ object TagQueryParameters {
   val Section = Argument("section", OptionInputType(StringType), description = "Only return tags from this section")
   val TagType = Argument("type", OptionInputType(TagTypes), description = "Type of the tag to return")
   val AllTagQueryParameters = tagId :: Section :: TagType :: Cursor :: OrderBy :: Limit :: Nil
+
+  val NonPaginatedTagQueryParameters = Section :: TagType :: Nil
 }
