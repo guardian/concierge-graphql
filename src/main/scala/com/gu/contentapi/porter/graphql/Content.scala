@@ -109,7 +109,7 @@ object Content {
     ),
     ReplaceField("alternateIds", Field("alternateIds", ListType(StringType), arguments = AlternateIdParameters.AllAlternateIdParameters, resolve= AlternateIdParameters.Resolver[DocumentRepo])),
     ReplaceField("elements", Field("elements", OptionType(ListType(ContentElement)),resolve=_.value.elements.map(_.toSeq))),
-    ReplaceField("atomIds", Field("atomIds", OptionType(ListType(StringType)), resolve=_.value.atomIds.map(_.map(_.id)))),
+    ReplaceField("atomIds", Field("atomIds", OptionType(ListType(Atom.SimpleAtom)), resolve=_.value.atomIds)),
     ReplaceField("tags", Field("tags", OptionType(ListType(Tags.Tag)),
       arguments = TagQueryParameters.NonPaginatedTagQueryParameters,
       resolve=ctx=> ctx.ctx.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType))

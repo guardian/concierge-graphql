@@ -25,7 +25,7 @@ case class Content(
   isGone: Boolean,
   thumbnail: Option[Image],
   debug: DebugFields,
-  atomIds: Option[Seq[AtomID]] = None,
+  atomIds: Option[Seq[SimpleAtom]] = None,
   isHosted: Boolean)
 
  case class ContentAliasPath(

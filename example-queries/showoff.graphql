@@ -1,0 +1,28 @@
+{
+  article(webTitle:"barclays", orderBy:newest, orderDate:published) {
+    totalCount
+    endCursor
+    nodes {
+      webTitle
+      sectionId
+      webPublicationDate
+      fields {
+        productionOffice
+        headline
+        byline
+      }
+      contributors: tags(type:contributor) {
+        webTitle
+        firstName
+        lastName
+        twitterHandle
+        path
+      }
+      keywords: tags(type:keyword) {
+        webTitle
+        type
+        path
+      }
+    }
+  }
+}
