@@ -1,6 +1,6 @@
 package com.gu.contentapi.porter.graphql
 
-import com.gu.contentapi.porter.model.Content
+import com.gu.contentapi.porter.model.{Content, Tag}
 import org.slf4j.LoggerFactory
 import sangria.schema.{Action, Argument, Context, EnumType, EnumValue, ListInputType, OptionInputType}
 
@@ -38,11 +38,14 @@ object AlternateIdParameters {
         description = Some("Internal print system reference")),
       EnumValue("internalPluto",
         value = "pluto",
-        description = Some("Internal video production system reference"))
+        description = Some("Internal video production system reference")),
+      EnumValue("internalTag",
+        value="tag",
+        description = Some("Internal tag reference"))
     )
   )
   object AlternateId extends Enumeration {
-    val all, shortcode, composer, page, urlpath, octopus, pluto = Value
+    val all, shortcode, composer, page, urlpath, octopus, pluto, tag = Value
   }
 
   val ParameterTypeId = Argument(
@@ -72,6 +75,8 @@ object AlternateIdParameters {
                   map + (AlternateId.octopus -> elem)
                 case "pluto"=>
                   map + (AlternateId.pluto -> elem)
+                case "tag" =>
+                  map + (AlternateId.tag -> elem)
                 case _=>
                   logger.warn(s"Unrecognised internal code type: $trail")
                   map
@@ -107,6 +112,10 @@ object AlternateIdParameters {
   }
 
   def Resolver[Ctx](ctx:Context[Ctx, Content]) = {
+    filterIds(ctx.value.alternateIds, ctx arg ParameterTypeId)
+  }
+
+  def TagResolver[Ctx](ctx:Context[Ctx, Tag]) = {
     filterIds(ctx.value.alternateIds, ctx arg ParameterTypeId)
   }
 }

@@ -1,7 +1,7 @@
 package datastore
 
 import anotherschema.Edge
-import com.gu.contentapi.porter.model.Content
+import com.gu.contentapi.porter.model.{Content, Tag}
 import com.sksamuel.elastic4s.sttp.SttpRequestHttpClient
 import com.sksamuel.elastic4s.{ElasticClient, ElasticNodeEndpoint, Response}
 import com.sksamuel.elastic4s.ElasticDsl._
@@ -9,6 +9,8 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
+import com.sksamuel.elastic4s.requests.searches.queries.ExistsQuery
+import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.queries.matches.MatchQuery
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, ScoreSort, Sort, SortOrder}
 import io.circe.Json
@@ -16,7 +18,7 @@ import org.slf4j.LoggerFactory
 import utils.RawResult
 import io.circe.generic.auto._
 
-import scala.reflect.ClassTag
+import scala.reflect.{ClassTag, classTag}
 
 class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20) extends DocumentRepo {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -136,6 +138,57 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
             .searchAfter(maybeCursor)
         }.flatMap(handleResponseMultiple(_, pageSize)(contentTransform))
       case Left(err) =>
+        Future.failed(new RuntimeException(s"Unable to decode cursor value $cursor: $err"))
+    }
+  }
+
+  private def buildTagQuery(maybeTagId:Option[String], maybeSection:Option[String], tagType:Option[String]) = {
+    val base = search("tag")
+
+    val params = Seq(
+      maybeTagId.map(MatchQuery("id", _)),
+      maybeSection.map(MatchQuery("sectionId", _)),
+      tagType.map({
+        case "podcast"=>
+          ExistsQuery("podcast")
+        case tp:String=>
+          MatchQuery("type", tp)
+      })
+    ).collect({case Some(param)=>param})
+
+    if(params.isEmpty) {
+      base
+    } else {
+      base.query(BoolQuery(must=params))
+    }
+  }
+
+  def tagTransform(j:Json) = j.as[Tag] match {
+    case Right(t)=>Some(t)
+    case Left(err)=>
+      val tagId = (j \\ "id").headOption.map(_.asString).getOrElse("unknown tag id")
+      logger.error(s"Could not unmarshal tag for $tagId: $err")
+      None
+  }
+
+  override def marshalledTags(maybeTagId:Option[String], maybeSection: Option[String], tagType:Option[String], orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Tag]] = {
+    val pageSize = limit.getOrElse(defaultPageSize)
+
+    val sortParam = if(maybeSection.isDefined || tagType.isDefined) {
+      ScoreSort(orderBy.getOrElse(SortOrder.DESC))
+    } else {
+      FieldSort("id", order = orderBy.getOrElse(SortOrder.ASC))
+    }
+
+    Edge.decodeCursor(cursor) match {
+      case Right(maybeCursor)=>
+        client.execute {
+          buildTagQuery(maybeTagId, maybeSection, tagType)
+            .sortBy(sortParam)
+            .limit(pageSize)
+            .searchAfter(maybeCursor)
+        }.flatMap(handleResponseMultiple(_, pageSize)(tagTransform))
+      case Left(err)=>
         Future.failed(new RuntimeException(s"Unable to decode cursor value $cursor: $err"))
     }
   }
