@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter
 import io.circe.generic.auto._
 import io.circe.syntax._
 import com.gu.contentapi.porter.model
+import datastore.DocumentRepo
 
 object Content {
   //here's a thought - wouldn't it be cool if we could specify a timezone in the query, have that timezone passed down in context, and output the data time in the requested TZ?
@@ -102,13 +103,17 @@ object Content {
   implicit val ContentBlocks = deriveObjectType[Unit, model.ContentBlocks]()
   implicit val Reference = deriveObjectType[Unit, model.Reference]()
 
-  val Content = deriveObjectType[Unit, model.Content](
+  val Content = deriveObjectType[DocumentRepo, model.Content](
     ReplaceField("webPublicationDate",
       Field("webPublicationDate", OptionType(StringType), resolve = _.value.webPublicationDate.map(_.format(DateTime.Formatter)))
     ),
-    ReplaceField("alternateIds", Field("alternateIds", ListType(StringType), arguments = AlternateIdParameters.AllAlternateIdParameters, resolve= AlternateIdParameters.Resolver[Unit])),
+    ReplaceField("alternateIds", Field("alternateIds", ListType(StringType), arguments = AlternateIdParameters.AllAlternateIdParameters, resolve= AlternateIdParameters.Resolver[DocumentRepo])),
     ReplaceField("elements", Field("elements", OptionType(ListType(ContentElement)),resolve=_.value.elements.map(_.toSeq))),
-    ReplaceField("atomIds", Field("atomIds", OptionType(ListType(StringType)), resolve=_.value.atomIds.map(_.map(_.id))))
+    ReplaceField("atomIds", Field("atomIds", OptionType(ListType(Atom.SimpleAtom)), resolve=_.value.atomIds)),
+    ReplaceField("tags", Field("tags", OptionType(ListType(Tags.Tag)),
+      arguments = TagQueryParameters.NonPaginatedTagQueryParameters,
+      resolve=ctx=> ctx.ctx.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType))
+    )
   )
 
 }

@@ -1,7 +1,7 @@
 package com.gu.contentapi.porter.graphql
 
 import anotherschema.Edge
-import com.gu.contentapi.porter.model.Content
+import com.gu.contentapi.porter.model.{Content, Tag}
 import sangria.schema._
 import datastore.DocumentRepo
 import io.circe.Json
@@ -22,6 +22,17 @@ object ContentQuery {
       Field("endCursor", OptionType(StringType), Some("The last record cursor in the set"), resolve = _.value.endCursor),
       Field("hasNextPage", BooleanType, Some("Whether there are any more records to retrieve"), resolve = _.value.hasNextPage),
       Field("nodes", ListType(com.gu.contentapi.porter.graphql.Content.Content), Some("The actual content returned"), resolve = _.value.nodes)
+    )
+  )
+
+  val TagEdge: ObjectType[Unit, Edge[Tag]] = ObjectType(
+    "TagEdge",
+    "A list of articles with pagination features",
+    () => fields[Unit, Edge[Tag]](
+      Field("totalCount", LongType, Some("Total number of results that match your query"), resolve = _.value.totalCount),
+      Field("endCursor", OptionType(StringType), Some("The last record cursor in the set"), resolve = _.value.endCursor),
+      Field("hasNextPage", BooleanType, Some("Whether there are any more records to retrieve"), resolve = _.value.hasNextPage),
+      Field("nodes", ListType(com.gu.contentapi.porter.graphql.Tags.Tag), Some("The actual content returned"), resolve = _.value.nodes)
     )
   )
 
@@ -46,6 +57,11 @@ object ContentQuery {
             case _ =>
               throw new RuntimeException("No fields given to search on")
           }
+      ),
+      Field("tag", TagEdge,
+        arguments = TagQueryParameters.AllTagQueryParameters,
+        resolve = ctx =>
+          ctx.ctx.marshalledTags(ctx arg TagQueryParameters.tagId, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg PaginationParameters.OrderBy, ctx arg Limit, ctx arg PaginationParameters.Cursor)
       )
     )
   )
