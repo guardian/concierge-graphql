@@ -1,6 +1,7 @@
 package datastore
 
 import anotherschema.Edge
+import com.gu.contentapi.porter.model.Content
 import com.sksamuel.elastic4s.sttp.SttpRequestHttpClient
 import com.sksamuel.elastic4s.{ElasticClient, ElasticNodeEndpoint, Response}
 import com.sksamuel.elastic4s.ElasticDsl._
@@ -13,6 +14,9 @@ import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, ScoreSort, Sort
 import io.circe.Json
 import org.slf4j.LoggerFactory
 import utils.RawResult
+import io.circe.generic.auto._
+
+import scala.reflect.ClassTag
 
 class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20) extends DocumentRepo {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -63,7 +67,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
-  private def handleResponseMultiple(response:Response[SearchResponse], pageSize:Int):Future[Edge[Json]] = {
+  private def handleResponseMultiple[D:io.circe.Decoder](response:Response[SearchResponse], pageSize:Int)(mapper:(Json)=>Option[D])(implicit ct:ClassTag[D]):Future[Edge[D]] = {
     if(response.isSuccess) {
       val allResults = response
         .result
@@ -84,13 +88,22 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
             response.result.hits.total.value,
             success.lastOption.flatMap(rec=>Edge.cursorValue(rec.sort)),  //FIXME - pagination not actually implemented here!
             success.length==pageSize, //FIXME - is there a better a way of determining if there is likely to be more content?
-            success.map(_.fulljson)
+            success.map(_.fulljson).map(mapper).collect({case Some(d)=>d})
           )
         )
       }
     } else {
       Future.failed(response.error.asException)
     }
+  }
+
+  private def identityTransform:Json=>Option[Json] = (j:Json)=>Some(j)
+
+  private def contentTransform:Json=>Option[Content] = _.as[Content] match {
+    case Right(content)=>Some(content)
+    case Left(err)=>
+      logger.error(s"Could not convert object from json: ", err)
+      None
   }
 
   override def docsByWebTitle(webTitle: String, orderDate:Option[String], orderBy:Option[SortOrder], limit:Option[Int], cursor:Option[String]): Future[Edge[Json]] = {
@@ -104,7 +117,24 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
             .sortBy(defaultingSortParam(orderDate, orderBy))
             .limit(pageSize)
             .searchAfter(maybeCursor)
-        }.flatMap(handleResponseMultiple(_, pageSize))
+        }.flatMap(handleResponseMultiple(_, pageSize)(identityTransform))
+      case Left(err) =>
+        Future.failed(new RuntimeException(s"Unable to decode cursor value $cursor: $err"))
+    }
+  }
+
+  override def marshalledDocsByWebTitle(webTitle: String, orderDate:Option[String], orderBy:Option[SortOrder], limit:Option[Int], cursor:Option[String]): Future[Edge[Content]] = {
+    val pageSize = limit.getOrElse(defaultPageSize)
+
+    Edge.decodeCursor(cursor) match {
+      case Right(maybeCursor) =>
+        client.execute {
+          search("content")
+            .query(MatchQuery("webTitle", webTitle))
+            .sortBy(defaultingSortParam(orderDate, orderBy))
+            .limit(pageSize)
+            .searchAfter(maybeCursor)
+        }.flatMap(handleResponseMultiple(_, pageSize)(contentTransform))
       case Left(err) =>
         Future.failed(new RuntimeException(s"Unable to decode cursor value $cursor: $err"))
     }

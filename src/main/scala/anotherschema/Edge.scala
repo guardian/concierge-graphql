@@ -8,8 +8,11 @@ import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 import scala.util.Try
+import io.circe.syntax._
 
-case class Edge[T](totalCount:Long, endCursor:Option[String], hasNextPage:Boolean, nodes:Seq[T])
+case class Edge[T:io.circe.Decoder](totalCount:Long, endCursor:Option[String], hasNextPage:Boolean, nodes:Seq[T]) {
+  def map[V:io.circe.Decoder](mapper:(T)=>V) = Edge[V](totalCount, endCursor, hasNextPage, nodes.map(mapper))
+}
 
 object Edge {
   private val logger = LoggerFactory.getLogger(getClass)

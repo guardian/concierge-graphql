@@ -49,8 +49,8 @@ case class PodcastCategory(
   main: String,
   sub: Option[String])
 
-object Tag {
-  implicit val codecPodcastCategory: Codec[PodcastCategory] = deriveCodec
-  implicit val codecTagPodcast: Codec[TagPodcast] = deriveCodec
-  implicit val codecTag: Codec[Tag] = deriveCodec
-}
+//object Tag {
+//  implicit val codecPodcastCategory: Codec[PodcastCategory] = deriveCodec
+//  implicit val codecTagPodcast: Codec[TagPodcast] = deriveCodec
+//  implicit val codecTag: Codec[Tag] = deriveCodec
+//}

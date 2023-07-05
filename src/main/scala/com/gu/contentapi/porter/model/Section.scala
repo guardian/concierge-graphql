@@ -23,7 +23,7 @@ case class SectionEdition(
   webTitle: String,
   code: String)
 
-object Section {
-  implicit val codecSectionEdition: Codec[SectionEdition] = deriveCodec
-  implicit val codecSection: Codec[Section] = deriveCodec
-}
+//object Section {
+//  implicit val codecSectionEdition: Codec[SectionEdition] = deriveCodec
+//  implicit val codecSection: Codec[Section] = deriveCodec
+//}

@@ -1,7 +1,7 @@
 package com.gu.contentapi.porter.model
 
 import io.circe.generic.JsonCodec
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 case class Content(
   id: String,
@@ -9,7 +9,7 @@ case class Content(
   alternateIds: Seq[String],
   contentAliases: Option[ContentAliases],
   webTitle: String,
-  webPublicationDate: Option[LocalDateTime],
+  webPublicationDate: Option[ZonedDateTime],
   sectionId: String,
   blocks: ContentBlocks,
   stats: ContentStats,
@@ -28,16 +28,16 @@ case class Content(
   atomIds: Option[Seq[AtomID]] = None,
   isHosted: Boolean)
 
-@JsonCodec case class ContentAliasPath(
+ case class ContentAliasPath(
   path: String,
-  ceasedToBeCanonicalAt: LocalDateTime)
+  ceasedToBeCanonicalAt: ZonedDateTime)
 
-@JsonCodec case class ContentAliases(
+ case class ContentAliases(
   firstPublishedPath: Option[String],
   canonicalPath: String,
   aliasPaths: Seq[ContentAliasPath])
 
-@JsonCodec case class ContentFields(
+ case class ContentFields(
   headline: Option[String] = None,
   byline: Option[String] = None,
   trailText: Option[String] = None,
@@ -50,16 +50,16 @@ case class Content(
   shortSocialShareText: Option[String] = None,
   socialShareText: Option[String] = None,
   shortUrl: Option[String] = None,
-  firstPublicationDate: Option[LocalDateTime] = None,
-  scheduledPublicationDate: Option[LocalDateTime] = None,
-  creationDate: Option[LocalDateTime] = None,
-  lastModified: Option[LocalDateTime] = None,
-  newspaperEditionDate: Option[LocalDateTime] = None,
+  firstPublicationDate: Option[ZonedDateTime] = None,
+  scheduledPublicationDate: Option[ZonedDateTime] = None,
+  creationDate: Option[ZonedDateTime] = None,
+  lastModified: Option[ZonedDateTime] = None,
+  newspaperEditionDate: Option[ZonedDateTime] = None,
   newspaperPageNumber: Option[Int] = None,
   hasStoryPackage: Option[Boolean] = None,
   allowUgc: Option[Boolean] = None,
   commentable: Option[Boolean] = None,
-  commentCloseDate: Option[LocalDateTime] = None,
+  commentCloseDate: Option[ZonedDateTime] = None,
   isPremoderated: Option[Boolean] = None,
   isInappropriateForSponsorship: Option[Boolean] = None,
   showInRelatedContent: Option[Boolean] = None,
@@ -92,43 +92,43 @@ case class Content(
   bylineHtml: Option[String] = None,
   showTableOfContents: Option[Boolean] = None)
 
-@JsonCodec case class ContentChannel(
+ case class ContentChannel(
   channelId: String,
   fields: ContentChannelFields)
 
-@JsonCodec case class ContentChannelFields(
+ case class ContentChannelFields(
   isAvailable: Boolean,
-  publicationDate: Option[LocalDateTime] = None)
+  publicationDate: Option[ZonedDateTime] = None)
 
-@JsonCodec case class ContentElement(
+ case class ContentElement(
   id: String,
   `type`: String,
   relation: String,
   assets: Set[ContentElementAsset])
 
-@JsonCodec case class ContentElementAsset(
+ case class ContentElementAsset(
   file: String,
   mimeType: String,
   `type`: String,
   typeData: Map[String, String])
 
-@JsonCodec case class Image(
+ case class Image(
   fields: ImageTypeData,
   assets: Seq[Asset])
 
-@JsonCodec case class ContentRights(
+ case class ContentRights(
   developerCommunity: Boolean,
   subscriptionDatabases: Boolean,
   syndicatable: Boolean)
 
-@JsonCodec case class ContentExpiry(
+ case class ContentExpiry(
   rights: ExpiryDetails,
   commercial: ExpiryDetails)
 
-@JsonCodec case class ExpiryDetails(
+ case class ExpiryDetails(
   expired: Boolean,
-  expiredAt: Option[LocalDateTime] = None,
-  scheduledExpiry: Option[LocalDateTime] = None)
+  expiredAt: Option[ZonedDateTime] = None,
+  scheduledExpiry: Option[ZonedDateTime] = None)
 
 /**
  * The blocks that make up a piece of content.
@@ -136,7 +136,7 @@ case class Content(
  * @param body The block(s) that make up the body of the content.
  *             For a liveblog there may be multiple blocks. Any other content will have only one block.
  */
-@JsonCodec case class ContentBlocks(
+ case class ContentBlocks(
   main: Option[Block],
   body: Option[Seq[Block]])
 
@@ -159,33 +159,33 @@ case class Content(
  * @param createdBy person who created this block
  * @param lastModifiedBy person who last modified this block
  */
-@JsonCodec case class Block(
+ case class Block(
   id: String,
   bodyHtml: String,
   bodyTextSummary: String,
   title: Option[String] = None,
   attributes: BlockAttributes,
   published: Boolean,
-  createdDate: Option[LocalDateTime] = None,
-  firstPublishedDate: Option[LocalDateTime] = None,
-  publishedDate: Option[LocalDateTime] = None,
-  lastModifiedDate: Option[LocalDateTime] = None,
+  createdDate: Option[ZonedDateTime] = None,
+  firstPublishedDate: Option[ZonedDateTime] = None,
+  publishedDate: Option[ZonedDateTime] = None,
+  lastModifiedDate: Option[ZonedDateTime] = None,
   contributors: Seq[String] = Nil,
   createdBy: Option[User] = None,
   lastModifiedBy: Option[User] = None,
   elements: Option[Seq[Element]] = None)
 
-@JsonCodec case class BlockAttributes(
+ case class BlockAttributes(
   keyEvent: Option[String] = None,
   summary: Option[String] = None,
   title: Option[String] = None,
   pinned: Option[String] = None,
   membershipPlaceholder: Option[MembershipPlaceholder] = None)
 
-@JsonCodec case class MembershipPlaceholder(
+ case class MembershipPlaceholder(
   campaignCode: Option[String])
 
-@JsonCodec case class ContentStats(
+ case class ContentStats(
   videos: Int,
   images: Int,
   text: Int,
@@ -201,14 +201,15 @@ case class Content(
   instagram: Int,
   vines: Int,
   code: Int,
-  callouts: Int)
+  //callouts: Int
+)
 
-@JsonCodec case class User(
+ case class User(
   email: String,
   firstName: Option[String],
   lastName: Option[String])
 
-@JsonCodec case class Element(
+ case class Element(
   `type`: String,
   assets: Option[Seq[Asset]],
   textTypeData: Option[TextTypeData] = None,
@@ -232,22 +233,22 @@ case class Content(
   codeTypeData: Option[CodeTypeData] = None,
   calloutTypeData: Option[CalloutTypeData] = None)
 
-@JsonCodec case class Asset(
+ case class Asset(
   `type`: String,
   mimeType: String,
   file: String,
   typeData: AssetTypeData)
 
-@JsonCodec case class TextTypeData(
+ case class TextTypeData(
   html: Option[String],
   role: Option[String])
 
-@JsonCodec case class PullquoteTypeData(
+ case class PullquoteTypeData(
   html: Option[String],
   attribution: Option[String],
   role: Option[String])
 
-@JsonCodec case class AudioTypeData(
+ case class AudioTypeData(
   html: Option[String],
   source: Option[String],
   description: Option[String],
@@ -266,7 +267,7 @@ case class Content(
   role: Option[String],
   isMandatory: Option[Boolean])
 
-@JsonCodec case class TweetTypeData(
+ case class TweetTypeData(
   source: Option[String],
   url: Option[String],
   id: Option[String],
@@ -275,7 +276,7 @@ case class Content(
   role: Option[String],
   isMandatory: Option[Boolean])
 
-@JsonCodec case class VideoTypeData(
+ case class VideoTypeData(
   url: Option[String],
   description: Option[String],
   title: Option[String],
@@ -301,7 +302,7 @@ case class Content(
   holdingImageSuppliersReference: Option[String],
   isMandatory: Option[Boolean])
 
-@JsonCodec case class ImageTypeData(
+ case class ImageTypeData(
   caption: Option[String],
   copyright: Option[String],
   displayCredit: Option[Boolean],
@@ -317,7 +318,7 @@ case class Content(
   comment: Option[String],
   role: Option[String])
 
-@JsonCodec case class InteractiveTypeData(
+ case class InteractiveTypeData(
   url: Option[String],
   originalUrl: Option[String],
   source: Option[String],
@@ -330,7 +331,7 @@ case class Content(
   role: Option[String],
   isMandatory: Option[Boolean])
 
-@JsonCodec case class StandardTypeData(
+ case class StandardTypeData(
   url: Option[String],
   originalUrl: Option[String],
   source: Option[String],
@@ -344,7 +345,7 @@ case class Content(
   role: Option[String],
   isMandatory: Option[Boolean])
 
-@JsonCodec case class WitnessTypeData(
+ case class WitnessTypeData(
   url: Option[String],
   originalUrl: Option[String],
   witnessEmbedType: Option[String],
@@ -363,7 +364,7 @@ case class Content(
   html: Option[String],
   apiUrl: Option[String],
   photographer: Option[String],
-  dateCreated: Option[LocalDateTime],
+  dateCreated: Option[ZonedDateTime],
   youtubeUrl: Option[String],
   youtubeSource: Option[String],
   youtubeTitle: Option[String],
@@ -372,7 +373,7 @@ case class Content(
   youtubeHtml: Option[String],
   role: Option[String])
 
-@JsonCodec case class RichLinkTypeData(
+ case class RichLinkTypeData(
   url: Option[String],
   originalUrl: Option[String],
   linkText: Option[String],
@@ -380,7 +381,7 @@ case class Content(
   role: Option[String],
   sponsorship: Option[Sponsorship] = None)
 
-@JsonCodec case class MembershipTypeData(
+ case class MembershipTypeData(
   originalUrl: Option[String],
   linkText: Option[String],
   linkPrefix: Option[String],
@@ -390,11 +391,11 @@ case class Content(
   identifier: Option[String],
   image: Option[String],
   price: Option[String],
-  start: Option[LocalDateTime],
-  end: Option[LocalDateTime],
+  start: Option[ZonedDateTime],
+  end: Option[ZonedDateTime],
   role: Option[String])
 
-@JsonCodec case class EmbedTypeData(
+ case class EmbedTypeData(
   html: Option[String],
   safeEmbedCode: Option[Boolean],
   alt: Option[String],
@@ -402,7 +403,7 @@ case class Content(
   role: Option[String],
   caption: Option[String])
 
-@JsonCodec case class CommentTypeData(
+ case class CommentTypeData(
   source: Option[String],
   discussionKey: Option[String],
   commentUrl: Option[String],
@@ -416,7 +417,7 @@ case class Content(
   role: Option[String],
   isMandatory: Option[Boolean])
 
-@JsonCodec case class AssetTypeData(
+ case class AssetTypeData(
   aspectRatio: Option[String],
   altText: Option[String],
   isInappropriateForAdverts: Option[Boolean],
@@ -432,7 +433,7 @@ case class Content(
   isMaster: Option[Boolean],
   sizeInBytes: Option[Long])
 
-@JsonCodec case class InstagramTypeData(
+ case class InstagramTypeData(
   originalUrl: String,
   title: String,
   source: String,
@@ -444,7 +445,7 @@ case class Content(
   caption: Option[String],
   role: Option[String])
 
-@JsonCodec case class VineTypeData(
+ case class VineTypeData(
   originalUrl: String,
   title: String,
   source: String,
@@ -457,25 +458,25 @@ case class Content(
   caption: Option[String],
   role: Option[String])
 
-@JsonCodec case class ContentAtomTypeData(
+ case class ContentAtomTypeData(
   atomId: String,
   atomType: String,
   role: Option[String],
   isMandatory: Option[Boolean])
 
-@JsonCodec case class CodeTypeData(
+ case class CodeTypeData(
   html: Option[String],
   language: Option[String])
 
-@JsonCodec case class CalloutTypeData(
+ case class CalloutTypeData(
   campaignId: Option[String],
   isNonCollapsible: Option[Boolean],
   overridePrompt: Option[String],
   overrideTitle: Option[String],
   overrideDescription: Option[String])
 
-@JsonCodec case class DebugFields(
-  lastSeenByPorterAt: LocalDateTime,
+ case class DebugFields(
+  lastSeenByPorterAt: ZonedDateTime,
   revisionSeenByPorter: Option[Long] = None,
   contentSource: Option[String] = None,
   originatingSystem: Option[String] = None)

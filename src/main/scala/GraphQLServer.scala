@@ -6,8 +6,6 @@ import fs2.Stream
 import org.http4s.dsl.io._
 import sangria.execution.Executor
 import sangria.renderer.SchemaRenderer
-import anotherschema.Content
-import com.gu.contentapi.porter.ElasticsearchDerivedSchema
 import datastore.DocumentRepo
 import sangria.marshalling.circe._
 import io.circe.syntax._
@@ -21,7 +19,7 @@ import scala.util.{Failure, Success}
 
 class GraphQLServer(documentRepo:DocumentRepo) {
   private val logger = LoggerFactory.getLogger(getClass)
-  private val inUseSchema = ElasticsearchDerivedSchema.schema //Content.ContentSchema
+  private val inUseSchema = com.gu.contentapi.porter.graphql.ContentQuery.schema //Content.ContentSchema
 
   private def parser(content:String) = Stream.apply(QueryParser.parse(content))
 
