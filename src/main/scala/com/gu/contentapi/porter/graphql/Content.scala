@@ -106,6 +106,7 @@ object Content {
     ReplaceField("webPublicationDate",
       Field("webPublicationDate", OptionType(StringType), resolve = _.value.webPublicationDate.map(_.format(DateTime.Formatter)))
     ),
+    ReplaceField("alternateIds", Field("alternateIds", ListType(StringType), arguments = AlternateIdParameters.AllAlternateIdParameters, resolve= AlternateIdParameters.Resolver[Unit])),
     ReplaceField("elements", Field("elements", OptionType(ListType(ContentElement)),resolve=_.value.elements.map(_.toSeq))),
     ReplaceField("atomIds", Field("atomIds", OptionType(ListType(StringType)), resolve=_.value.atomIds.map(_.map(_.id))))
   )
