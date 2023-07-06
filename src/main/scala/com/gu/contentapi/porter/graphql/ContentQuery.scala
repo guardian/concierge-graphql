@@ -53,7 +53,8 @@ object ContentQuery {
             case None =>
               ctx.ctx
                 .marshalledDocs(ctx arg ContentQueryParameters.QueryString, ctx arg ContentQueryParameters.QueryFields,
-                  ctx arg ContentQueryParameters.TagArg, ctx arg ContentQueryParameters.SectionArg,
+                  ctx arg ContentQueryParameters.TagArg, ctx arg ContentQueryParameters.ExcludeTagArg,
+                  ctx arg ContentQueryParameters.SectionArg, ctx arg ContentQueryParameters.ExcludeSectionArg,
                   ctx arg PaginationParameters.OrderDate, ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
           }
       ),

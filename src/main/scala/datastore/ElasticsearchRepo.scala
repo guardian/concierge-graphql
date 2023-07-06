@@ -125,7 +125,11 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
-  override def marshalledDocs(queryString: Option[String], queryFields: Option[Seq[String]], tagIds: Option[Seq[String]], sectionIds: Option[Seq[String]], orderDate: Option[String], orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Content]] = {
+  override def marshalledDocs(queryString: Option[String], queryFields: Option[Seq[String]],
+                              tagIds: Option[Seq[String]], excludeTags: Option[Seq[String]],
+                              sectionIds: Option[Seq[String]], excludeSections: Option[Seq[String]],
+                              orderDate: Option[String], orderBy: Option[SortOrder],
+                              limit: Option[Int], cursor: Option[String]): Future[Edge[Content]] = {
     val pageSize = limit.getOrElse(defaultPageSize)
 
     val fieldsToQuery = queryFields
@@ -134,8 +138,10 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
 
     val params:Seq[Query] = Seq(
       queryString.map(MultiMatchQuery(_, fields = fieldsToQuery)),
-      tagIds.map(tags=>BoolQuery(should=tags.map(MatchQuery("tags", _)))) ,
-      sectionIds.map(s=>BoolQuery(should=s.map(MatchQuery("sectionId", _))))
+      tagIds.map(tags=>BoolQuery(must=tags.map(MatchQuery("tags", _)))) ,
+      excludeTags.map(tags=>BoolQuery(not=Seq(BoolQuery(should=tags.map(MatchQuery("tags", _)))))),
+      sectionIds.map(s=>BoolQuery(should=s.map(MatchQuery("sectionId", _)))),
+      excludeSections.map(s=>BoolQuery(not=Seq(BoolQuery(should=s.map(MatchQuery("sectionId", _))))))
     ).collect({case Some(q)=>q})
 
     Edge.decodeCursor(cursor) match {
