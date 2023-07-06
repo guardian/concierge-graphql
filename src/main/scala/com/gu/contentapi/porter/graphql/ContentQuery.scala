@@ -26,12 +26,12 @@ object ContentQuery {
 
   val TagEdge: ObjectType[Unit, Edge[Tag]] = ObjectType(
     "TagEdge",
-    "A list of articles with pagination features",
+    "A list of tags with pagination features",
     () => fields[Unit, Edge[Tag]](
       Field("totalCount", LongType, Some("Total number of results that match your query"), resolve = _.value.totalCount),
       Field("endCursor", OptionType(StringType), Some("The last record cursor in the set"), resolve = _.value.endCursor),
       Field("hasNextPage", BooleanType, Some("Whether there are any more records to retrieve"), resolve = _.value.hasNextPage),
-      Field("nodes", ListType(com.gu.contentapi.porter.graphql.Tags.Tag), Some("The actual content returned"), resolve = _.value.nodes)
+      Field("nodes", ListType(com.gu.contentapi.porter.graphql.Tags.Tag), Some("The actual tags returned"), resolve = _.value.nodes)
     )
   )
 

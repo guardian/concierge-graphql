@@ -8,9 +8,9 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
-import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, Query}
+import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, Query, RangeQuery}
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
-import com.sksamuel.elastic4s.requests.searches.queries.matches.{FieldWithOptionalBoost, MatchQuery, MultiMatchQuery}
+import com.sksamuel.elastic4s.requests.searches.queries.matches.{FieldWithOptionalBoost, MatchAllQuery, MatchQuery, MultiMatchQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, ScoreSort, Sort, SortOrder}
 import deprecated.anotherschema.Edge
 import io.circe.Json
@@ -88,7 +88,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
         Future(
           Edge(
             response.result.hits.total.value,
-            success.lastOption.flatMap(rec=>Edge.cursorValue(rec.sort)),  //FIXME - pagination not actually implemented here!
+            success.lastOption.flatMap(rec=>Edge.cursorValue(rec.sort)),
             success.length==pageSize, //FIXME - is there a better a way of determining if there is likely to be more content?
             success.map(_.fulljson).map(mapper).collect({case Some(d)=>d})
           )
@@ -245,5 +245,84 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
           .map(_.toSeq)
       }
     }
+  }
+
+  private def findAtoms(atomIds: Option[Seq[String]], queryString: Option[String],
+                        queryFields: Option[Seq[String]], atomType: Option[String],
+                        revisionBefore: Option[Long], revisionAfter: Option[Long],
+                        orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Response[SearchResponse]] = {
+    val pageSize = limit.getOrElse(defaultPageSize)
+
+    val sortParam = if (queryString.isDefined || atomIds.isDefined) {
+      ScoreSort(orderBy.getOrElse(SortOrder.DESC))
+    } else {
+      FieldSort("lastModified", order = orderBy.getOrElse(SortOrder.ASC))
+    }
+
+    val fieldsToQuery = queryFields
+      .getOrElse(Seq("title", "labels"))
+      .map(FieldWithOptionalBoost(_, None))
+
+    val revisionRange = (revisionBefore, revisionAfter) match {
+      case (None, None) =>
+        None
+      case _ =>
+        Some(RangeQuery("revision", gt = revisionAfter, lt = revisionBefore))
+    }
+
+    val params = Seq(
+      atomIds.map(idList => BoolQuery(should = idList.map(MatchQuery("id", _)))),
+      queryString.map(MultiMatchQuery(_, fields = fieldsToQuery)),
+      atomType.map(MatchQuery("atomType", _)),
+      revisionRange,
+    ).collect({ case Some(param) => param })
+
+    Edge.decodeCursor(cursor) match {
+      case Right(maybeCursor) =>
+        client.execute {
+          val q = if (params.isEmpty) {
+            MatchAllQuery()
+          } else {
+            BoolQuery(must = params)
+          }
+
+          search("atoms").query(q).sortBy(sortParam)
+            .limit(pageSize)
+            .searchAfter(maybeCursor)
+        }
+      case Left(err) =>
+        Future.failed(new RuntimeException(s"Unable to decode cursor value $cursor: $err"))
+    }
+  }
+
+  /**
+   * Queries for a defined list of atoms without pagination, intended for lifting a list of atoms to hydrate from an article
+   * @param atomIds
+   * @param atomType
+   * @return
+   */
+  override def atomsForList(atomIds: Seq[String], atomType: Option[String]) = {
+    findAtoms(Some(atomIds), None, None, atomType, None,None, None, Some(atomIds.length), None) flatMap { response =>
+      if (response.isError) {
+        logger.error(s"Could not make query for tags $atomIds: ${response.error}")
+        Future.failed(response.error.asException)
+      } else {
+        Future(response.result.hits.hits
+          .map(RawResult.apply)
+          .map(_.map(_.content))
+          .collect({ case Right(tag) => tag })
+        )
+          .map(_.toSeq)
+      }
+    }
+  }
+
+  override def atoms(atomIds: Option[Seq[String]], queryString: Option[String],
+                     queryFields: Option[Seq[String]], atomType: Option[String],
+                     revisionBefore: Option[Long], revisionAfter: Option[Long],
+                     orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Json]] = {
+    val pageSize = limit.getOrElse(defaultPageSize)
+
+    findAtoms(atomIds, queryString, queryFields, atomType, revisionBefore, revisionAfter, orderBy, limit, cursor).flatMap(handleResponseMultiple(_, pageSize)(identityTransform))
   }
 }

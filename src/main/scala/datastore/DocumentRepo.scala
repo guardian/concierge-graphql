@@ -22,4 +22,12 @@ trait DocumentRepo {
   def marshalledTags(maybeTagId:Option[String], maybeSection: Option[String], tagType:Option[String], orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Tag]]
 
   def tagsForList(tagIdList:Seq[String], maybeSection: Option[String], tagType:Option[String]):Future[Seq[Tag]]
+
+  def atomsForList(atomIds: Seq[String], atomType: Option[String]):Future[Seq[Json]]
+
+  def atoms(atomIds: Option[Seq[String]], queryString: Option[String],
+            queryFields: Option[Seq[String]], atomType: Option[String],
+            revisionBefore: Option[Long], revisionAfter: Option[Long],
+            orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Json]]
+
 }
