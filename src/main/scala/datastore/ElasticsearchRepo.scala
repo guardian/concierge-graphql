@@ -11,7 +11,7 @@ import scala.concurrent.Future
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
 import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, Query}
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
-import com.sksamuel.elastic4s.requests.searches.queries.matches.MatchQuery
+import com.sksamuel.elastic4s.requests.searches.queries.matches.{FieldWithOptionalBoost, MatchQuery, MultiMatchQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, ScoreSort, Sort, SortOrder}
 import io.circe.Json
 import org.slf4j.LoggerFactory
@@ -125,14 +125,30 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
-  override def marshalledDocsByWebTitle(webTitle: String, orderDate:Option[String], orderBy:Option[SortOrder], limit:Option[Int], cursor:Option[String]): Future[Edge[Content]] = {
+  override def marshalledDocs(queryString: Option[String], queryFields: Option[Seq[String]],
+                              tagIds: Option[Seq[String]], excludeTags: Option[Seq[String]],
+                              sectionIds: Option[Seq[String]], excludeSections: Option[Seq[String]],
+                              orderDate: Option[String], orderBy: Option[SortOrder],
+                              limit: Option[Int], cursor: Option[String]): Future[Edge[Content]] = {
     val pageSize = limit.getOrElse(defaultPageSize)
+
+    val fieldsToQuery = queryFields
+      .getOrElse(Seq("webTitle", "path"))  //default behaviour from Concierge
+      .map(FieldWithOptionalBoost(_, None))
+
+    val params:Seq[Query] = Seq(
+      queryString.map(MultiMatchQuery(_, fields = fieldsToQuery)),
+      tagIds.map(tags=>BoolQuery(must=tags.map(MatchQuery("tags", _)))) ,
+      excludeTags.map(tags=>BoolQuery(not=Seq(BoolQuery(should=tags.map(MatchQuery("tags", _)))))),
+      sectionIds.map(s=>BoolQuery(should=s.map(MatchQuery("sectionId", _)))),
+      excludeSections.map(s=>BoolQuery(not=Seq(BoolQuery(should=s.map(MatchQuery("sectionId", _))))))
+    ).collect({case Some(q)=>q})
 
     Edge.decodeCursor(cursor) match {
       case Right(maybeCursor) =>
         client.execute {
           search("content")
-            .query(MatchQuery("webTitle", webTitle))
+            .query(BoolQuery(must=params))
             .sortBy(defaultingSortParam(orderDate, orderBy))
             .limit(pageSize)
             .searchAfter(maybeCursor)
@@ -173,6 +189,8 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
       logger.error(s"Could not unmarshal tag for $tagId: $err")
       None
   }
+
+  //FIXME: tagsForList / marshalledTags could be DRY'd out a bit
 
   override def marshalledTags(maybeTagId:Option[String], maybeSection: Option[String], tagType:Option[String], orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Tag]] = {
     val pageSize = limit.getOrElse(defaultPageSize)
