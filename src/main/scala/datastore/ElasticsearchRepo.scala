@@ -125,23 +125,6 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
-  override def marshalledDocsByWebTitle(webTitle: String, orderDate:Option[String], orderBy:Option[SortOrder], limit:Option[Int], cursor:Option[String]): Future[Edge[Content]] = {
-    val pageSize = limit.getOrElse(defaultPageSize)
-
-    Edge.decodeCursor(cursor) match {
-      case Right(maybeCursor) =>
-        client.execute {
-          search("content")
-            .query(MatchQuery("webTitle", webTitle))
-            .sortBy(defaultingSortParam(orderDate, orderBy))
-            .limit(pageSize)
-            .searchAfter(maybeCursor)
-        }.flatMap(handleResponseMultiple(_, pageSize)(contentTransform))
-      case Left(err) =>
-        Future.failed(new RuntimeException(s"Unable to decode cursor value $cursor: $err"))
-    }
-  }
-
   override def marshalledDocs(queryString: Option[String], queryFields: Option[Seq[String]], tagIds: Option[Seq[String]], sectionIds: Option[Seq[String]], orderDate: Option[String], orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Content]] = {
     val pageSize = limit.getOrElse(defaultPageSize)
 
