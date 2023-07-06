@@ -1,9 +1,9 @@
-package anotherschema.content
+package deprecated.anotherschema.content
 
-import anotherschema.CirceHelpers
+import deprecated.anotherschema.CirceHelpers
 import io.circe.Json
 import sangria.schema._
-
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object Debug extends CirceHelpers {
 
   val definition = ObjectType(

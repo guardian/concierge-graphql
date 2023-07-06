@@ -1,12 +1,12 @@
-package anotherschema.content.blocks
+package deprecated.anotherschema.content.blocks
 
-import anotherschema.content.blocks.element.AssetTypeArguments
-import anotherschema.{CirceHelpers, SchemaDefinition}
+import deprecated.anotherschema.{CirceHelpers, SchemaDefinition}
+import deprecated.anotherschema.content.blocks.element.AssetTypeArguments
 import io.circe.Json
 import sangria.schema._
 import io.circe.optics.JsonPath
 import io.circe.syntax._
-
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object Element extends SchemaDefinition with CirceHelpers {
   private val ElementTypeX = JsonPath.root.`type`.string
 

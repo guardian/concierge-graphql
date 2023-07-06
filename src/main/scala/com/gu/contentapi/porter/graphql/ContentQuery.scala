@@ -1,9 +1,9 @@
 package com.gu.contentapi.porter.graphql
 
-import anotherschema.Edge
 import com.gu.contentapi.porter.model.{Content, Tag}
 import sangria.schema._
 import datastore.DocumentRepo
+import deprecated.anotherschema.Edge
 import io.circe.Json
 
 import scala.concurrent.ExecutionContext.Implicits.global

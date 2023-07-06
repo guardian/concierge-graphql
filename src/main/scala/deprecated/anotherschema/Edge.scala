@@ -1,4 +1,4 @@
-package anotherschema
+package deprecated.anotherschema
 
 import com.sksamuel.elastic4s.Hit
 import com.sksamuel.elastic4s.requests.searches.SearchHit
@@ -9,11 +9,11 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 import scala.util.Try
 import io.circe.syntax._
-
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 case class Edge[T:io.circe.Decoder](totalCount:Long, endCursor:Option[String], hasNextPage:Boolean, nodes:Seq[T]) {
   def map[V:io.circe.Decoder](mapper:(T)=>V) = Edge[V](totalCount, endCursor, hasNextPage, nodes.map(mapper))
 }
-
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object Edge {
   private val logger = LoggerFactory.getLogger(getClass)
   private val encoder = Base64.getEncoder

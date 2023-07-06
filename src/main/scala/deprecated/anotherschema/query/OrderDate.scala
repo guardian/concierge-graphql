@@ -1,7 +1,7 @@
-package anotherschema.query
+package deprecated.anotherschema.query
 
 import sangria.schema.{EnumType, EnumValue}
-
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object OrderDate {
   val definition = EnumType(
     "OrderDate",

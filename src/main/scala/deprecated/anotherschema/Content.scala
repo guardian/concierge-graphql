@@ -1,17 +1,19 @@
-package anotherschema
+package deprecated.anotherschema
 
-import anotherschema.content.Blocks
 import io.circe.{Json, JsonObject}
 import io.circe.syntax._
 import sangria.schema._
 import io.circe.generic.auto._
 import com.sksamuel.elastic4s.circe._
 import datastore.DocumentRepo
+import deprecated.anotherschema.content.{Blocks, Debug}
+import deprecated.anotherschema.query.AlternateIdParameters
 import org.slf4j.LoggerFactory
 import sangria.marshalling.circe._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object Content extends SchemaDefinition with CirceHelpers {
   private val logger = LoggerFactory.getLogger(getClass)
   val ContentTypeEnum = EnumType(
@@ -48,8 +50,8 @@ object Content extends SchemaDefinition with CirceHelpers {
       Field("alternateIds",
         ListType(StringType),
         Some("Alternate IDs for this article"),
-        arguments = anotherschema.query.AlternateIdParameters.AllAlternateIdParameters,
-        resolve = ctx => anotherschema.query.AlternateIdParameters.filterIds(altIds.getAll(ctx.value), ctx arg anotherschema.query.AlternateIdParameters.ParameterTypeId)
+        arguments = AlternateIdParameters.AllAlternateIdParameters,
+        resolve = ctx => query.AlternateIdParameters.filterIds(altIds.getAll(ctx.value), ctx arg query.AlternateIdParameters.ParameterTypeId)
       ),
       Field("webTitle", OptionType(StringType),
         Some("The title of the document, for web purposes. Normally (but not always) the same as the headline"),
@@ -57,8 +59,8 @@ object Content extends SchemaDefinition with CirceHelpers {
       ),
       Field("webPublicationDate", OptionType(StringType), Some("When was this published"), resolve = ctx => getString(ctx,"webPublicationDate")),
       Field("sectionId", OptionType(StringType), Some("Which section does this belong to"), resolve = ctx => getString(ctx,"sectionId")),
-      Field("debug", OptionType(anotherschema.content.Debug.definition), Some("Internal debugging information"), resolve = ctx => (ctx.value \\ "debug").headOption),
-      Field("blocks", anotherschema.content.Blocks.definition, None, resolve = ctx => (ctx.value \\ "blocks").head),
+      Field("debug", OptionType(Debug.definition), Some("Internal debugging information"), resolve = ctx => (ctx.value \\ "debug").headOption),
+      Field("blocks", Blocks.definition, None, resolve = ctx => (ctx.value \\ "blocks").head),
       Field("cursor", OptionType(StringType), Some("Cursor for pagination"), resolve = ctx => getString(ctx, "cursor"))
     )
   )
@@ -74,7 +76,7 @@ object Content extends SchemaDefinition with CirceHelpers {
     )
   )
 
-  import anotherschema.query.ContentQueryParameters._
+  import deprecated.anotherschema.query.ContentQueryParameters._
 
   val Query = ObjectType[DocumentRepo, Unit](
     "Query", fields[DocumentRepo, Unit](

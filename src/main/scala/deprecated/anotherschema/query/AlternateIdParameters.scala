@@ -1,10 +1,10 @@
-package anotherschema.query
+package deprecated.anotherschema.query
 
 import org.slf4j.LoggerFactory
 import sangria.schema.{Argument, EnumType, EnumValue, ListInputType, OptionInputType}
 
 import scala.util.{Success, Try}
-
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object AlternateIdParameters {
   private val logger = LoggerFactory.getLogger(getClass)
 

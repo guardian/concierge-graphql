@@ -1,8 +1,8 @@
-package anotherschema
+package deprecated.anotherschema
 
 import io.circe.Json
 import sangria.schema.Context
-
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 trait CirceHelpers {
   def getStringList(ctx: Context[Unit, Json], key: String) = (ctx.value \\ key).flatMap(_.asString.toList)
 

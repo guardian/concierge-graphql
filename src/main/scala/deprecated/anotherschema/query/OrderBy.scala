@@ -1,9 +1,8 @@
-package anotherschema.query
-
+package deprecated.anotherschema.query
 
 import sangria.schema.{EnumType, EnumValue, ObjectType}
 import com.sksamuel.elastic4s.requests.searches.sort.SortOrder
-
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object OrderBy {
   val definition = EnumType(
     "Ordering",

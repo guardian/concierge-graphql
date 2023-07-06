@@ -1,9 +1,11 @@
-package anotherschema.content.blocks.element
+package deprecated.anotherschema.content.blocks.element
 
 import io.circe.Json
 import io.circe.optics.JsonPath
 import sangria.schema._
-import anotherschema.content.blocks.Element
+import deprecated.anotherschema.content.blocks.Element
+
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object ElementArguments {
   val ElementType = Argument("type", OptionInputType(Element.ElementTypes), description = "Only retrieve assets with this element type")
 

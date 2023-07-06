@@ -1,8 +1,8 @@
 package utils
 
-import anotherschema.Edge
 import com.sksamuel.elastic4s.Hit
 import com.sksamuel.elastic4s.requests.searches.SearchHit
+import deprecated.anotherschema.Edge
 import io.circe.{Json, ParsingFailure}
 import io.circe.generic.auto
 import io.circe.syntax._

@@ -1,6 +1,5 @@
 package datastore
 
-import anotherschema.Edge
 import com.gu.contentapi.porter.model.{Content, Tag}
 import com.sksamuel.elastic4s.sttp.SttpRequestHttpClient
 import com.sksamuel.elastic4s.{ElasticClient, ElasticNodeEndpoint, Response}
@@ -13,6 +12,7 @@ import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, Query}
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.queries.matches.{FieldWithOptionalBoost, MatchQuery, MultiMatchQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, ScoreSort, Sort, SortOrder}
+import deprecated.anotherschema.Edge
 import io.circe.Json
 import org.slf4j.LoggerFactory
 import utils.RawResult

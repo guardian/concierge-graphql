@@ -1,8 +1,8 @@
 package datastore
 
-import anotherschema.Edge
 import com.gu.contentapi.porter.model.{Content, Tag}
 import com.sksamuel.elastic4s.requests.searches.sort.SortOrder
+import deprecated.anotherschema.Edge
 import io.circe.Json
 import schema.Content
 import utils.RawResult

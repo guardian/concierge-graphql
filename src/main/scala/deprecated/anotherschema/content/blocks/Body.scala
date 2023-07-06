@@ -1,12 +1,13 @@
-package anotherschema.content.blocks
+package deprecated.anotherschema.content.blocks
 
-import anotherschema.content.blocks.element.ElementArguments
-import anotherschema.{CirceHelpers, SchemaDefinition}
+import deprecated.anotherschema.{CirceHelpers, SchemaDefinition}
+import deprecated.anotherschema.content.blocks.element.ElementArguments
 import io.circe.Json
 import io.circe.optics.JsonPath
 import org.slf4j.LoggerFactory
 import sangria.schema.{BooleanType, Field, ListType, ObjectType, OptionType, StringType, fields}
 
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object Body extends SchemaDefinition with CirceHelpers {
   override val definition: ObjectType[Unit, Json] = ObjectType(
     "body",

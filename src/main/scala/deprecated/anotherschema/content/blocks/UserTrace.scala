@@ -1,9 +1,10 @@
-package anotherschema.content.blocks
+package deprecated.anotherschema.content.blocks
 
-import anotherschema.{CirceHelpers, SchemaDefinition}
+import deprecated.anotherschema.{CirceHelpers, SchemaDefinition}
 import io.circe.Json
 import sangria.schema.{Field, ObjectType, OptionType, StringType, fields}
 
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object UserTrace extends SchemaDefinition with CirceHelpers {
   override val definition: ObjectType[Unit, Json] = ObjectType(
     "UserTrace",

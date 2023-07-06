@@ -1,11 +1,11 @@
-package anotherschema.content
+package deprecated.anotherschema.content
 
-import anotherschema.{CirceHelpers, SchemaDefinition}
-import anotherschema.content.blocks.Body
+import deprecated.anotherschema.{CirceHelpers, SchemaDefinition}
+import deprecated.anotherschema.content.blocks.Body
 import io.circe.Json
 import io.circe.optics.JsonPath
 import sangria.schema.{Field, ListType, ObjectType, fields}
-
+@deprecated("you should be using com.gu.contentapi.porter.graphql")
 object Blocks extends SchemaDefinition with CirceHelpers {
   override val definition: ObjectType[Unit, Json] = ObjectType(
     "Blocks",
