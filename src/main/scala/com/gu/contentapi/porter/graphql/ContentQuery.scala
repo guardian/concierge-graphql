@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory
 
 object ContentQuery {
   private val logger = LoggerFactory.getLogger(getClass)
-  import anotherschema.query.ContentQueryParameters._
 
   val Edge: ObjectType[Unit, Edge[Content]] = ObjectType(
     "ArticleEdge",
@@ -46,22 +45,22 @@ object ContentQuery {
   val Query = ObjectType[DocumentRepo, Unit](
     "Query", fields[DocumentRepo, Unit](
       Field("article", Edge,
-        arguments = AllContentQueryParameters,
+        arguments = ContentQueryParameters.AllContentQueryParameters,
         resolve = ctx =>
-          (ctx arg ContentIdArg, ctx arg WebTitleArg) match {
-            case (Some(contentId), _) =>
+          ctx arg ContentQueryParameters.ContentIdArg match {
+            case Some(contentId) =>
               ctx.ctx.docById(contentId).map(_.map(contentTransform))
-            case (_, Some(webTitle)) =>
+            case None =>
               ctx.ctx
-                .marshalledDocsByWebTitle(webTitle, ctx arg OrderDate, ctx arg OrderBy, ctx arg Limit, ctx arg Cursor)
-            case _ =>
-              throw new RuntimeException("No fields given to search on")
+                .marshalledDocs(ctx arg ContentQueryParameters.QueryString, ctx arg ContentQueryParameters.QueryFields,
+                  ctx arg ContentQueryParameters.TagArg, ctx arg ContentQueryParameters.SectionArg,
+                  ctx arg PaginationParameters.OrderDate, ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
           }
       ),
       Field("tag", TagEdge,
         arguments = TagQueryParameters.AllTagQueryParameters,
         resolve = ctx =>
-          ctx.ctx.marshalledTags(ctx arg TagQueryParameters.tagId, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg PaginationParameters.OrderBy, ctx arg Limit, ctx arg PaginationParameters.Cursor)
+          ctx.ctx.marshalledTags(ctx arg TagQueryParameters.tagId, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
       )
     )
   )
