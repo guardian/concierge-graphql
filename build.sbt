@@ -35,6 +35,8 @@ lazy val root = (project in file("."))
       "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test"
     ),
     dependencyOverrides ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.5"  //required for json logging encoder
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.5",  //required for json logging encoder
+      "io.netty" % "netty-handler" % "4.1.94.Final",
+      "io.netty" % "netty-codec-http" % "4.1.94.Final",
     )
   )
