@@ -126,6 +126,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
   }
 
   override def marshalledDocs(queryString: Option[String], queryFields: Option[Seq[String]],
+                              atomId: Option[String],
                               tagIds: Option[Seq[String]], excludeTags: Option[Seq[String]],
                               sectionIds: Option[Seq[String]], excludeSections: Option[Seq[String]],
                               orderDate: Option[String], orderBy: Option[SortOrder],
@@ -138,6 +139,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
 
     val params:Seq[Query] = Seq(
       queryString.map(MultiMatchQuery(_, fields = fieldsToQuery)),
+      atomId.map(MatchQuery("atomIds.id", _)),
       tagIds.map(tags=>BoolQuery(must=tags.map(MatchQuery("tags", _)))) ,
       excludeTags.map(tags=>BoolQuery(not=Seq(BoolQuery(should=tags.map(MatchQuery("tags", _)))))),
       sectionIds.map(s=>BoolQuery(should=s.map(MatchQuery("sectionId", _)))),
@@ -256,7 +258,8 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     val sortParam = if (queryString.isDefined || atomIds.isDefined) {
       ScoreSort(orderBy.getOrElse(SortOrder.DESC))
     } else {
-      FieldSort("lastModified", order = orderBy.getOrElse(SortOrder.ASC))
+      ScoreSort(orderBy.getOrElse(SortOrder.DESC))
+      //FieldSort("lastModified.date", order = orderBy.getOrElse(SortOrder.ASC))
     }
 
     val fieldsToQuery = queryFields

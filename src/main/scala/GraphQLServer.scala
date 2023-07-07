@@ -19,7 +19,7 @@ import scala.util.{Failure, Success}
 
 class GraphQLServer(documentRepo:DocumentRepo) {
   private val logger = LoggerFactory.getLogger(getClass)
-  private val inUseSchema = com.gu.contentapi.porter.graphql.ContentQuery.schema //Content.ContentSchema
+  private val inUseSchema = com.gu.contentapi.porter.graphql.RootQuery.schema //Content.ContentSchema
 
   private def parser(content:String) = Stream.apply(QueryParser.parse(content))
 

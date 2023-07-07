@@ -14,6 +14,7 @@ trait DocumentRepo {
   def docsByWebTitle(webTitle:String, orderDate:Option[String], orderBy:Option[SortOrder], limit:Option[Int], cursor:Option[String]):Future[Edge[Json]]
 
   def marshalledDocs(queryString: Option[String], queryFields: Option[Seq[String]],
+                     atomId: Option[String],
                      tagIds: Option[Seq[String]], excludeTags: Option[Seq[String]],
                      sectionIds: Option[Seq[String]], excludeSections: Option[Seq[String]],
                      orderDate:Option[String], orderBy:Option[SortOrder],

@@ -11,6 +11,7 @@ import org.http4s.implicits._
 import org.slf4j.LoggerFactory
 import security.Security.limitByTier
 import security.{InternalTier, UserTier}
+import scala.concurrent.duration._
 
 object Main extends IOApp {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -50,6 +51,8 @@ object Main extends IOApp {
       .default[IO]
       .withHost(ipv4"0.0.0.0")
       .withPort(port"9000")
+      .withIdleTimeout(2.seconds)
+      .withShutdownTimeout(2.seconds)
       .withHttpApp(httpApp)
       .build
       .use(_=>IO.never)
