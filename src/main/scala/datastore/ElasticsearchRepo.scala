@@ -27,7 +27,15 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
 
   override def docById(id: String): Future[Edge[Json]] = {
     client.execute {
-      search("content").query(MatchQuery("id", id)).sortByFieldDesc("webPublicationDate")
+      search("content")
+        .query(
+          BoolQuery(must=Seq(
+            MatchQuery("id", id),
+            MatchQuery("isGone", false),
+            MatchQuery("isExpired", false),
+          ))
+        )
+        .sortByFieldDesc("webPublicationDate")
     }.flatMap(response=>{
       if(response.isSuccess) {
         response
@@ -109,23 +117,6 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
       None
   }
 
-  override def docsByWebTitle(webTitle: String, orderDate:Option[String], orderBy:Option[SortOrder], limit:Option[Int], cursor:Option[String]): Future[Edge[Json]] = {
-    val pageSize = limit.getOrElse(defaultPageSize)
-
-    Edge.decodeCursor(cursor) match {
-      case Right(maybeCursor) =>
-        client.execute {
-          search("content")
-            .query(MatchQuery("webTitle", webTitle))
-            .sortBy(defaultingSortParam(orderDate, orderBy))
-            .limit(pageSize)
-            .searchAfter(maybeCursor)
-        }.flatMap(handleResponseMultiple(_, pageSize)(identityTransform))
-      case Left(err) =>
-        Future.failed(new RuntimeException(s"Unable to decode cursor value $cursor: $err"))
-    }
-  }
-
   private def limitToChannelQuery(channel:String):Query = NestedQuery(
     path="channels",
     query=BoolQuery(must=Seq(
@@ -134,6 +125,10 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     ))
   )
 
+  private val standardAvailabilityQuery:Seq[Query] = Seq(
+    MatchQuery("isExpired", false),
+    MatchQuery("isGone", false),
+  )
   override def marshalledDocs(queryString: Option[String], queryFields: Option[Seq[String]],
                               atomId: Option[String], forChannel:Option[String], userTier:UserTier,
                               tagIds: Option[Seq[String]], excludeTags: Option[Seq[String]],
@@ -149,7 +144,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     //only internal tier users are allowed to query other channels
     val selectedChannel = if(userTier==InternalTier) forChannel.getOrElse("open") else "open"
 
-    val params:Seq[Query] = Seq(
+    val params:Seq[Query] = standardAvailabilityQuery ++ Seq(
       Some(limitToChannelQuery(selectedChannel)),
       queryString.map(MultiMatchQuery(_, fields = fieldsToQuery)),
       atomId.map(MatchQuery("atomIds.id", _)),

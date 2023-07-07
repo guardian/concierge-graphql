@@ -12,7 +12,6 @@ import scala.concurrent.Future
 
 trait DocumentRepo {
   def docById(id:String):Future[Edge[Json]]
-  def docsByWebTitle(webTitle:String, orderDate:Option[String], orderBy:Option[SortOrder], limit:Option[Int], cursor:Option[String]):Future[Edge[Json]]
 
   def marshalledDocs(queryString: Option[String], queryFields: Option[Seq[String]],
                      atomId: Option[String], forChannel:Option[String], userTier: UserTier,

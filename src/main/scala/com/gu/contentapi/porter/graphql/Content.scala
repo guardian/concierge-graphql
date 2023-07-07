@@ -115,7 +115,7 @@ object Content {
       arguments = TagQueryParameters.NonPaginatedTagQueryParameters,
       resolve=ctx=> ctx.ctx.repo.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType))
     ),
-    ExcludeFields("atomIds"),
+    ExcludeFields("atomIds", "isGone", "isExpired"),
     AddFields(
       Field("atoms", ListType(Atom.Atom),
         arguments=AtomQueryParameters.AtomType :: Nil,
