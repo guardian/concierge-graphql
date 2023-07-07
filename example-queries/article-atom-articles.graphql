@@ -1,0 +1,30 @@
+{
+    article(id:"environment/2019/nov/12/greta-thunberg-climate-crisis-message-vote") {
+        nodes {
+            alternateIds
+            webTitle
+            webPublicationDate
+            fields {
+                byline
+                commentable
+            }
+            atoms(type:media) {
+                atomType
+                alternateIds
+                commissioningDesks
+                existsIn {
+                    totalCount
+                    nodes {
+                        webTitle
+                        webPublicationDate
+                        alternateIds
+                        fields {
+                            byline
+                            commentable
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

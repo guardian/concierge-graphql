@@ -1,0 +1,888 @@
+#taken from commit 4da46fc38264973424e2245311c33ddd83a7ba22
+"Different types of alternate IDs available"
+enum AlternateIdType {
+    "Return all alternate IDs"
+    all
+
+    "The full URL reference"
+    url
+
+    "URL short-code"
+    shortcode
+
+    "Internal composer code reference"
+    internalComposer
+
+    "Internal page code reference"
+    internalPage
+
+    "Internal print system reference"
+    internalOctopus
+
+    "Internal video production system reference"
+    internalPluto
+
+    "Internal tag reference"
+    internalTag
+}
+
+"A list of articles with pagination features"
+type ArticleEdge {
+    "Total number of results that match your query"
+    totalCount: Long!
+
+    "The last record cursor in the set"
+    endCursor: String
+
+    "Whether there are any more records to retrieve"
+    hasNextPage: Boolean!
+
+    "The actual content returned"
+    nodes: [Content!]!
+}
+
+type Asset {
+    type: String!
+    mimeType: String!
+    file: String!
+    typeData: AssetTypeData!
+}
+
+type AssetTypeData {
+    aspectRatio: String
+    altText: String
+    isInappropriateForAdverts: Boolean
+    caption: String
+    credit: String
+    embeddable: Boolean
+    photographer: String
+    source: String
+    width: Int
+    height: Int
+    name: String
+    secureFile: String
+    isMaster: Boolean
+    sizeInBytes: Long
+}
+
+"A content atom, i.e. a piece of content that is embeddable within an article but with its own lifecycle"
+type Atom {
+    alternateIds: [String!]!
+    atomType: String!
+    commissioningDesks: [String!]
+
+    "Search for articles that embed this atom"
+    existsIn(
+        "get one article by ID"
+        id: String,
+
+        "an Elastic Search query string to search for content"
+        q: String,
+
+        "fields to perform a query against. Defaults to webTitle and path."
+        queryFields: [String!],
+
+        "look up articles associated with all of these tag IDs"
+        tags: [String!],
+
+        "don't include any articles with these tag IDs"
+        excludeTags: [String!],
+
+        "look up articles in any of these sections"
+        sectionId: [String!],
+
+        "don't include any articles with these tag IDs"
+        excludeSections: [String!],
+
+        "whether to order ascending or descending"
+        orderBy: Ordering,
+
+        "choose a field to sort the results on"
+        orderDate: OrderDate,
+
+        "To continue a search, pass the value from `endCursor` in this argument"
+        cursor: String,
+
+        "The maximum number of results to return"
+        limit: Int): ArticleEdge!
+
+    "Details of significant events in the object lifecycle"
+    contentChangeDetails: ContentChangeDetails
+
+    "Type-specific JSON encoded data for the atom"
+    data: String
+}
+
+"A list of atoms with pagination features"
+type AtomEdge {
+    "Total number of results that match your query"
+    totalCount: Long!
+
+    "The last record cursor in the set"
+    endCursor: String
+
+    "Whether there are any more records to retrieve"
+    hasNextPage: Boolean!
+
+    "The actual atoms returned"
+    nodes: [Atom!]!
+}
+
+"Types of atoms available in the system"
+enum AtomType {
+    quiz
+    media
+    chart
+    explainer
+    qanda
+    profile
+    timeline
+    cta
+    guide
+    audio
+}
+
+type AudioTypeData {
+    html: String
+    source: String
+    description: String
+    title: String
+    credit: String
+    caption: String
+    authorName: String
+    originalUrl: String
+    height: Int
+    width: Int
+    durationMinutes: Int
+    durationSeconds: Int
+    explicit: Boolean
+    clean: Boolean
+    mediaId: String
+    role: String
+    isMandatory: Boolean
+}
+
+type Block {
+    id: String!
+    bodyHtml: String!
+    bodyTextSummary: String!
+    title: String
+    attributes: BlockAttributes!
+    published: Boolean!
+    contributors: [String!]!
+    createdBy: User
+    lastModifiedBy: User
+    elements: [Element!]
+    createdDate: String
+    firstPublishedDate: String
+    publishedDate: String
+    lastModifiedDate: String
+}
+
+type BlockAttributes {
+    keyEvent: String
+    summary: String
+    title: String
+    pinned: String
+    membershipPlaceholder: MembershipPlaceholder
+}
+
+type CalloutTypeData {
+    campaignId: String
+    isNonCollapsible: Boolean
+    overridePrompt: String
+    overrideTitle: String
+    overrideDescription: String
+}
+
+"Details of who changed something and when"
+type ChangeDetails {
+    date: String
+    user: User
+}
+
+type CodeTypeData {
+    html: String
+    language: String
+}
+
+type CommentTypeData {
+    source: String
+    discussionKey: String
+    commentUrl: String
+    originalUrl: String
+    sourceUrl: String
+    discussionUrl: String
+    authorUrl: String
+    html: String
+    authorName: String
+    commentId: Int
+    role: String
+    isMandatory: Boolean
+}
+
+type Content {
+    id: String!
+    type: String!
+    contentAliases: ContentAliases
+    webTitle: String!
+    sectionId: String!
+    blocks: ContentBlocks!
+    stats: ContentStats!
+    fields: ContentFields!
+    channels: [ContentChannel!]!
+    leadTags: [String!]!
+    references: [Reference!]!
+    rights: ContentRights
+    expiry: ContentExpiry!
+    isExpired: Boolean
+    isGone: Boolean!
+    thumbnail: Image
+    debug: DebugFields!
+    isHosted: Boolean!
+    webPublicationDate: String
+    alternateIds(
+        "Which types of IDs do you want"
+        type: [AlternateIdType!]): [String!]!
+    elements: [ContentElement!]
+    atomIds: [SimpleAtom!]
+    tags(
+        "Only return tags from this section"
+        section: String,
+
+        "Type of the tag to return"
+        type: TagType): [Tag!]
+    atoms(
+        "only return atoms of this type"
+        type: AtomType): [Atom!]!
+}
+
+type ContentAliasPath {
+    path: String!
+    ceasedToBeCanonicalAt: String!
+}
+
+type ContentAliases {
+    firstPublishedPath: String
+    canonicalPath: String!
+    aliasPaths: [ContentAliasPath!]!
+}
+
+type ContentAtomTypeData {
+    atomId: String!
+    atomType: String!
+    role: String
+    isMandatory: Boolean
+}
+
+type ContentBlocks {
+    main: Block
+    body: [Block!]
+}
+
+"Details of when the content was changed"
+type ContentChangeDetails {
+    created: ChangeDetails
+    embargo: ChangeDetails
+    expiry: ChangeDetails
+    lastModified: ChangeDetails
+    published: ChangeDetails
+    scheduledLaunch: ChangeDetails
+    revision: Long!
+    takenDown: ChangeDetails
+}
+
+type ContentChannel {
+    channelId: String!
+    fields: ContentChannelFields!
+}
+
+type ContentChannelFields {
+    isAvailable: Boolean!
+    publicationDate: String
+}
+
+type ContentElement {
+    id: String!
+    type: String!
+    relation: String!
+    assets: [ContentElementAsset!]!
+}
+
+type ContentElementAsset {
+    file: String!
+    mimeType: String!
+    type: String!
+    typeData: String!
+}
+
+type ContentExpiry {
+    rights: ExpiryDetails!
+    commercial: ExpiryDetails!
+}
+
+type ContentFields {
+    headline: String
+    byline: String
+    trailText: String
+    main: String
+    body: String
+    publication: String
+    productionOffice: String
+    contributorBio: String
+    wordcount: Int
+    shortSocialShareText: String
+    socialShareText: String
+    shortUrl: String
+    newspaperPageNumber: Int
+    hasStoryPackage: Boolean
+    allowUgc: Boolean
+    commentable: Boolean
+    isPremoderated: Boolean
+    isInappropriateForSponsorship: Boolean
+    showInRelatedContent: Boolean
+    legallySensitive: Boolean
+    sensitive: Boolean
+    showAffiliateLinks: Boolean
+    shouldHideAdverts: Boolean
+    shouldHideReaderRevenue: Boolean
+    liveBloggingNow: Boolean
+    membershipAccess: String
+    thumbnail: String
+    secureThumbnail: String
+    internalContentCode: Long
+    internalComposerCode: String
+    internalPageCode: Long!
+    internalOctopusCode: Long
+    internalStoryPackageCode: Long
+    internalRevision: Long
+    internalShortId: String
+    standfirst: String
+    displayHint: String
+    isPrintSent: Boolean
+    isLive: Boolean!
+    lang: String
+    bodyText: String
+    charCount: Int
+    internalVideoCode: String
+    internalCommissionedWordcount: Int
+    bylineHtml: String
+    showTableOfContents: Boolean
+    firstPublicationDate: String
+    scheduledPublicationDate: String
+    creationDate: String
+    lastModified: String
+    newspaperEditionDate: String
+    commentCloseDate: String
+    starRating: Int
+}
+
+type ContentRights {
+    developerCommunity: Boolean!
+    subscriptionDatabases: Boolean!
+    syndicatable: Boolean!
+}
+
+type ContentStats {
+    videos: Int!
+    images: Int!
+    text: Int!
+    tweets: Int!
+    pullquotes: Int!
+    audio: Int!
+    interactives: Int!
+    witness: Int!
+    richlinks: Int!
+    membership: Int!
+    embeds: Int!
+    comments: Int!
+    instagram: Int!
+    vines: Int!
+    code: Int!
+}
+
+type DebugFields {
+    revisionSeenByPorter: Long
+    contentSource: String
+    originatingSystem: String
+    lastSeenByPorterAt: String!
+}
+
+type Element {
+    type: String!
+    assets: [Asset!]
+    textTypeData: TextTypeData
+    videoTypeData: VideoTypeData
+    tweetTypeData: TweetTypeData
+    imageTypeData: ImageTypeData
+    pullquoteTypeData: PullquoteTypeData
+    audioTypeData: AudioTypeData
+    interactiveTypeData: InteractiveTypeData
+    mapTypeData: StandardTypeData
+    documentTypeData: StandardTypeData
+    tableTypeData: StandardTypeData
+    witnessTypeData: WitnessTypeData
+    richLinkTypeData: RichLinkTypeData
+    membershipTypeData: MembershipTypeData
+    embedTypeData: EmbedTypeData
+    commentTypeData: CommentTypeData
+    instagramTypeData: InstagramTypeData
+    vineTypeData: VineTypeData
+    contentAtomTypeData: ContentAtomTypeData
+    codeTypeData: CodeTypeData
+    calloutTypeData: CalloutTypeData
+}
+
+type EmbedTypeData {
+    html: String
+    safeEmbedCode: Boolean
+    alt: String
+    isMandatory: Boolean
+    role: String
+    caption: String
+}
+
+type ExpiryDetails {
+    expired: Boolean!
+    expiredAt: String
+    scheduledExpiry: String
+}
+
+type Image {
+    fields: ImageTypeData!
+    assets: [Asset!]!
+}
+
+type ImageTypeData {
+    caption: String
+    copyright: String
+    displayCredit: Boolean
+    credit: String
+    source: String
+    photographer: String
+    alt: String
+    mediaId: String
+    mediaApiUri: String
+    picdarUrn: String
+    suppliersReference: String
+    imageType: String
+    comment: String
+    role: String
+}
+
+type InstagramTypeData {
+    originalUrl: String!
+    title: String!
+    source: String!
+    authorUrl: String!
+    authorUsername: String!
+    html: String
+    width: Int
+    alt: String
+    caption: String
+    role: String
+}
+
+type InteractiveTypeData {
+    url: String
+    originalUrl: String
+    source: String
+    caption: String
+    alt: String
+    scriptUrl: String
+    html: String
+    scriptName: String
+    iframeUrl: String
+    role: String
+    isMandatory: Boolean
+}
+
+type MembershipPlaceholder {
+    campaignCode: String
+}
+
+type MembershipTypeData {
+    originalUrl: String
+    linkText: String
+    linkPrefix: String
+    title: String
+    venue: String
+    location: String
+    identifier: String
+    image: String
+    price: String
+    role: String
+    start: String
+    end: String
+}
+
+"Which date field to use for ordering the content"
+enum OrderDate {
+    "When the content was published to web"
+    published
+
+    "When the first version of this content was published"
+    firstPublished
+
+    "The last time the content was modified prior to publication"
+    lastModified
+
+    "The date that this was published in the newspaper (can be null)"
+    newspaperEdition
+
+    "When the article is scheduled to be launched"
+    scheduledPublication
+
+    "When the content was last indexed"
+    lastIndexed
+}
+
+"How to sort the results"
+enum Ordering {
+    newest
+    oldest
+}
+
+type PodcastCategory {
+    main: String!
+    sub: String
+}
+
+type PullquoteTypeData {
+    html: String
+    attribution: String
+    role: String
+}
+
+type Query {
+    article(
+        "get one article by ID"
+        id: String,
+
+        "an Elastic Search query string to search for content"
+        q: String,
+
+        "fields to perform a query against. Defaults to webTitle and path."
+        queryFields: [String!],
+
+        "look up articles associated with all of these tag IDs"
+        tags: [String!],
+
+        "don't include any articles with these tag IDs"
+        excludeTags: [String!],
+
+        "look up articles in any of these sections"
+        sectionId: [String!],
+
+        "don't include any articles with these tag IDs"
+        excludeSections: [String!],
+
+        "whether to order ascending or descending"
+        orderBy: Ordering,
+
+        "choose a field to sort the results on"
+        orderDate: OrderDate,
+
+        "To continue a search, pass the value from `endCursor` in this argument"
+        cursor: String,
+
+        "The maximum number of results to return"
+        limit: Int): ArticleEdge!
+    tag(
+        "Retrieve this specific tag"
+        tagId: String,
+
+        "Only return tags from this section"
+        section: String,
+
+        "Type of the tag to return"
+        type: TagType,
+
+        "To continue a search, pass the value from `endCursor` in this argument"
+        cursor: String,
+
+        "whether to order ascending or descending"
+        orderBy: Ordering,
+
+        "The maximum number of results to return"
+        limit: Int): TagEdge!
+    atom(
+        "list only atoms with one of these IDs"
+        atomIds: [String!],
+
+        "optional query string"
+        q: String,
+
+        "fields to perform a query against. Defaults to atom title and labels."
+        queryFields: [String!],
+
+        "only return atoms of this type"
+        type: AtomType,
+
+        "only return atoms which have a revision number before this value"
+        revisionBefore: Long,
+
+        "only return atoms which have a revision number after this value"
+        revisionAfter: Long,
+
+        "whether to order ascending or descending"
+        orderBy: Ordering,
+
+        "The maximum number of results to return"
+        limit: Int,
+
+        "To continue a search, pass the value from `endCursor` in this argument"
+        cursor: String): AtomEdge!
+}
+
+type Reference {
+    type: String!
+    id: String!
+}
+
+type RichLinkTypeData {
+    url: String
+    originalUrl: String
+    linkText: String
+    linkPrefix: String
+    role: String
+    sponsorship: Sponsorship
+}
+
+type SimpleAtom {
+    id: String!
+    atomType: String!
+}
+
+type Sponsorship {
+    sponsorshipType: String!
+    sponsorName: String!
+    sponsorLogo: String!
+    sponsorLogoDimensions: SponsorshipLogoDimensions
+    highContrastSponsorLogo: String
+    highContrastSponsorLogoDimensions: SponsorshipLogoDimensions
+    sponsorLink: String!
+    aboutLink: String
+    targeting: SponsorshipTargeting
+    validFrom: String
+    validTo: String
+}
+
+type SponsorshipLogoDimensions {
+    width: Int!
+    height: Int!
+}
+
+type SponsorshipTargeting {
+    validEditions: [String!]
+    publishedSince: String
+}
+
+type StandardTypeData {
+    url: String
+    originalUrl: String
+    source: String
+    title: String
+    description: String
+    credit: String
+    caption: String
+    width: Int
+    height: Int
+    html: String
+    role: String
+    isMandatory: Boolean
+}
+
+type Tag {
+    id: String!
+    sectionId: String
+    webTitle: String!
+    references: [Reference!]!
+    bio: String
+    bylineImageUrl: String
+    bylineLargeImageUrl: String
+    description: String
+    emailAddress: String
+    firstName: String
+    lastName: String
+    path: String!
+    twitterHandle: String
+    podcast: TagPodcast
+    r2ContributorId: String
+    rcsId: String
+    paidContentType: String
+    paidContentCampaignColour: String
+    activeSponsorships: [Sponsorship!]
+    expired: Boolean!
+    campaignInformationType: String
+    internalName: String
+    type: TagType
+    alternateIds(
+        "Which types of IDs do you want"
+        type: [AlternateIdType!]): [String!]!
+    tagCategories: [String!]!
+    entityIds: [String!]!
+}
+
+"A list of tags with pagination features"
+type TagEdge {
+    "Total number of results that match your query"
+    totalCount: Long!
+
+    "The last record cursor in the set"
+    endCursor: String
+
+    "Whether there are any more records to retrieve"
+    hasNextPage: Boolean!
+
+    "The actual tags returned"
+    nodes: [Tag!]!
+}
+
+type TagPodcast {
+    author: String!
+    copyright: String!
+    explicit: Boolean!
+    linkUrl: String!
+    subscriptionUrl: String
+    image: String
+    categories: [PodcastCategory!]!
+    podcastType: String
+    googlePodcastsUrl: String
+    spotifyUrl: String
+    acastId: String
+    pocketCastsUrl: String
+}
+
+"Different types of tag available"
+enum TagType {
+    "Tags which describe an author or co-author"
+    contributor
+
+    "Tags which are used to organise and categorise content"
+    keyword
+
+    "Tags which are used to group content which belongs in a series"
+    series
+
+    "A series which is also a podcast"
+    podcast
+
+    "Tags used for internal organisation of the newspaper"
+    newspaperBookSection
+
+    "Tags used for internal organisation of the newspaper"
+    newspaperBook
+
+    "Tags which identify something as a blog"
+    blog
+
+    "Tags which identify something as having been externally paid for"
+    paidContent
+
+    "Tags which identify content belonging to a campaign"
+    campaign
+
+    "Tags which identify the intention of the content"
+    tone
+
+    "Tags which identify the kind of content"
+    type
+
+    "Tags which are used for tracking content"
+    tracking
+
+    "Tags to identify the publication that this was commissioned for"
+    publication
+}
+
+type TextTypeData {
+    html: String
+    role: String
+}
+
+type TweetTypeData {
+    source: String
+    url: String
+    id: String
+    html: String
+    originalUrl: String
+    role: String
+    isMandatory: Boolean
+}
+
+type User {
+    email: String!
+    firstName: String
+    lastName: String
+}
+
+type VideoTypeData {
+    url: String
+    description: String
+    title: String
+    html: String
+    source: String
+    credit: String
+    caption: String
+    height: Int
+    width: Int
+    duration: Int
+    contentAuthSystem: String
+    embeddable: String
+    isInappropriateForAdverts: Boolean
+    mediaId: String
+    thumbnailImageUrl: String
+    shortUrl: String
+    role: String
+    originalUrl: String
+    holdingImageSource: String
+    holdingImagePhotographer: String
+    holdingImagePicdarUrn: String
+    holdingImageCopyright: String
+    holdingImageSuppliersReference: String
+    isMandatory: Boolean
+}
+
+type VineTypeData {
+    originalUrl: String!
+    title: String!
+    source: String!
+    authorUrl: String!
+    authorUsername: String!
+    html: String
+    width: Int
+    height: Int
+    alt: String
+    caption: String
+    role: String
+}
+
+type WitnessTypeData {
+    url: String
+    originalUrl: String
+    witnessEmbedType: String
+    mediaId: String
+    source: String
+    title: String
+    description: String
+    authorName: String
+    authorUsername: String
+    authorWitnessProfileUrl: String
+    authorGuardianProfileUrl: String
+    caption: String
+    alt: String
+    width: Int
+    height: Int
+    html: String
+    apiUrl: String
+    photographer: String
+    youtubeUrl: String
+    youtubeSource: String
+    youtubeTitle: String
+    youtubeDescription: String
+    youtubeAuthorName: String
+    youtubeHtml: String
+    role: String
+    dateCreated: String
+}

@@ -10,10 +10,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import io.circe.generic.auto._
 import org.slf4j.LoggerFactory
 
-object ContentQuery {
+object RootQuery {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  val Edge: ObjectType[Unit, Edge[Content]] = ObjectType(
+  val ArticleEdge: ObjectType[Unit, Edge[Content]] = ObjectType(
     "ArticleEdge",
     "A list of articles with pagination features",
     () => fields[Unit, Edge[Content]](
@@ -26,12 +26,23 @@ object ContentQuery {
 
   val TagEdge: ObjectType[Unit, Edge[Tag]] = ObjectType(
     "TagEdge",
-    "A list of articles with pagination features",
+    "A list of tags with pagination features",
     () => fields[Unit, Edge[Tag]](
       Field("totalCount", LongType, Some("Total number of results that match your query"), resolve = _.value.totalCount),
       Field("endCursor", OptionType(StringType), Some("The last record cursor in the set"), resolve = _.value.endCursor),
       Field("hasNextPage", BooleanType, Some("Whether there are any more records to retrieve"), resolve = _.value.hasNextPage),
-      Field("nodes", ListType(com.gu.contentapi.porter.graphql.Tags.Tag), Some("The actual content returned"), resolve = _.value.nodes)
+      Field("nodes", ListType(com.gu.contentapi.porter.graphql.Tags.Tag), Some("The actual tags returned"), resolve = _.value.nodes)
+    )
+  )
+
+  val AtomEdge: ObjectType[Unit, Edge[Json]] = ObjectType(
+    "AtomEdge",
+    "A list of atoms with pagination features",
+    () => fields[Unit, Edge[Json]](
+      Field("totalCount", LongType, Some("Total number of results that match your query"), resolve = _.value.totalCount),
+      Field("endCursor", OptionType(StringType), Some("The last record cursor in the set"), resolve = _.value.endCursor),
+      Field("hasNextPage", BooleanType, Some("Whether there are any more records to retrieve"), resolve = _.value.hasNextPage),
+      Field("nodes", ListType(Atom.Atom), Some("The actual atoms returned"), resolve = _.value.nodes)
     )
   )
 
@@ -44,7 +55,7 @@ object ContentQuery {
 
   val Query = ObjectType[DocumentRepo, Unit](
     "Query", fields[DocumentRepo, Unit](
-      Field("article", Edge,
+      Field("article", ArticleEdge,
         arguments = ContentQueryParameters.AllContentQueryParameters,
         resolve = ctx =>
           ctx arg ContentQueryParameters.ContentIdArg match {
@@ -53,6 +64,7 @@ object ContentQuery {
             case None =>
               ctx.ctx
                 .marshalledDocs(ctx arg ContentQueryParameters.QueryString, ctx arg ContentQueryParameters.QueryFields,
+                  None,
                   ctx arg ContentQueryParameters.TagArg, ctx arg ContentQueryParameters.ExcludeTagArg,
                   ctx arg ContentQueryParameters.SectionArg, ctx arg ContentQueryParameters.ExcludeSectionArg,
                   ctx arg PaginationParameters.OrderDate, ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
@@ -62,7 +74,13 @@ object ContentQuery {
         arguments = TagQueryParameters.AllTagQueryParameters,
         resolve = ctx =>
           ctx.ctx.marshalledTags(ctx arg TagQueryParameters.tagId, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
-      )
+      ),
+      Field("atom", AtomEdge,
+        arguments = AtomQueryParameters.AllParameters,
+        resolve = ctx=>
+      ctx.ctx.atoms(ctx arg AtomQueryParameters.AtomIds, ctx arg AtomQueryParameters.QueryString, ctx arg AtomQueryParameters.QueryFields,
+        ctx arg AtomQueryParameters.AtomType, ctx arg AtomQueryParameters.RevisionBefore, ctx arg AtomQueryParameters.RevisionAfter,
+        ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor))
     )
   )
 

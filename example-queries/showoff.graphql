@@ -1,5 +1,5 @@
 {
-  article(webTitle:"barclays", orderBy:newest, orderDate:published) {
+  article(q:"barclays", orderBy:newest, orderDate:published) {
     totalCount
     endCursor
     nodes {

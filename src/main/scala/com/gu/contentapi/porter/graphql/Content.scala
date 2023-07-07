@@ -8,6 +8,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import com.gu.contentapi.porter.model
 import datastore.DocumentRepo
+import sangria.macros.derive
 
 object Content {
   //here's a thought - wouldn't it be cool if we could specify a timezone in the query, have that timezone passed down in context, and output the data time in the requested TZ?
@@ -113,6 +114,12 @@ object Content {
     ReplaceField("tags", Field("tags", OptionType(ListType(Tags.Tag)),
       arguments = TagQueryParameters.NonPaginatedTagQueryParameters,
       resolve=ctx=> ctx.ctx.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType))
+    ),
+    ExcludeFields("atomIds"),
+    AddFields(
+      Field("atoms", ListType(Atom.Atom),
+        arguments=AtomQueryParameters.AtomType :: Nil,
+        resolve= ctx=>ctx.ctx.atomsForList(ctx.value.atomIds.getOrElse(Seq()).map(_.id), ctx arg AtomQueryParameters.AtomType))
     )
   )
 
