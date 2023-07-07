@@ -9,6 +9,8 @@ val elastic4sVersion = "7.17.4"
 maintainer := "Content Platforms team <content-platforms.dev@theguardian.com>"
 packageSummary := "A proof-of-concept for doing CAPI queries with GraphQL"
 
+val prometheusVersion = "0.16.0"
+
 lazy val root = (project in file("."))
   .settings(
     name := "concierge-graphql",
@@ -31,6 +33,12 @@ lazy val root = (project in file("."))
 
       "com.sksamuel.elastic4s" %% "elastic4s-client-sttp" % elastic4sVersion,
       "com.sksamuel.elastic4s" %% "elastic4s-json-circe" % elastic4sVersion,
+
+      //metrics
+      "io.prometheus" % "simpleclient" % prometheusVersion,
+      "io.prometheus" % "simpleclient_hotspot" % prometheusVersion,
+      "io.prometheus" % "simpleclient_common" % prometheusVersion,
+
       // test kit
       "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test"
     ),

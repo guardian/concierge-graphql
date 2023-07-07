@@ -9,6 +9,7 @@ import sangria.renderer.SchemaRenderer
 import datastore.DocumentRepo
 import sangria.marshalling.circe._
 import io.circe.syntax._
+import middleware.FieldMetrics
 import org.slf4j.LoggerFactory
 import sangria.ast.Document
 import utils.GraphQLRequestBody
@@ -21,17 +22,14 @@ class GraphQLServer(documentRepo:DocumentRepo) {
   private val logger = LoggerFactory.getLogger(getClass)
   private val inUseSchema = com.gu.contentapi.porter.graphql.RootQuery.schema
 
-  private def parser(content:String) = Stream.apply(QueryParser.parse(content))
+  private val metrics = FieldMetrics.singleton
 
-  def justATest:Future[String] = Future {
-    Thread.sleep(500)
-    "this is a test"
-  }
+  private def parser(content:String) = Stream.apply(QueryParser.parse(content))
 
   private def performQuery(doc:Document, variables:Option[Map[String,String]]) =
     IO.fromFuture(
       IO(
-        Executor.execute(inUseSchema, doc, userContext = documentRepo).map(_.asJson.noSpaces)
+        Executor.execute(inUseSchema, doc, middleware = metrics :: Nil, userContext = documentRepo).map(_.asJson.noSpaces)
       )
     )
     .map(body=>Ok(body))

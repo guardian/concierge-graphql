@@ -1,8 +1,9 @@
 import cats.effect._
 import cats.effect.unsafe.implicits.global
-import com.comcast.ip4s.IpLiteralSyntax
+import com.comcast.ip4s.{IpLiteralSyntax, Ipv4Address, Ipv6Address}
 import com.sksamuel.elastic4s.ElasticNodeEndpoint
 import datastore.ElasticsearchRepo
+import io.prometheus.client.hotspot.DefaultExports
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.server.Router
@@ -11,10 +12,12 @@ import org.http4s.implicits._
 import org.slf4j.LoggerFactory
 import security.Security.limitByTier
 import security.{InternalTier, UserTier}
+import internalmetrics.PrometheusMetrics
 import scala.concurrent.duration._
 
 object Main extends IOApp {
   private val logger = LoggerFactory.getLogger(getClass)
+  DefaultExports.initialize()
   val documentRepo = new ElasticsearchRepo(ElasticNodeEndpoint("http","localhost",9200, None))
   val server = new GraphQLServer(documentRepo)
 
@@ -42,6 +45,18 @@ object Main extends IOApp {
       server
         .getSchema(name)
       .map(response => response.copy(headers = response.headers.put("Content-Type" -> "application/graphql")))
+    case req @ GET -> Root / "metrics" =>
+      val validAddresses = Seq(
+        Ipv4Address.fromString("127.0.0.1").get,
+        Ipv6Address.fromString("::1").get
+      )
+
+      if(req.remoteAddr.isDefined && validAddresses.contains(req.remoteAddr.get)) {
+        Ok(PrometheusMetrics.dumpMetrics)
+          .map(response => response.copy(headers = response.headers.put("Content-Type" -> "text/plain; version=0.0.4; charset=UTF-8")))
+      } else {
+        Forbidden("you do not have permission to access this endpoint")
+      }
   }
 
   def run(args:List[String]):IO[ExitCode] = {
