@@ -60,7 +60,7 @@ object Atom {
         description = Some("Search for articles that embed this atom"),
         arguments = ContentQueryParameters.AllContentQueryParameters,
         resolve = ctx=> ctx.ctx.repo.marshalledDocs(ctx arg ContentQueryParameters.QueryString, ctx arg ContentQueryParameters.QueryFields,
-          JsonPath.root.id.string.getOption(ctx.value),
+          JsonPath.root.id.string.getOption(ctx.value), ctx arg ContentQueryParameters.ChannelArg, ctx.ctx.userTier,
           ctx arg ContentQueryParameters.TagArg, ctx arg ContentQueryParameters.ExcludeTagArg,
           ctx arg ContentQueryParameters.SectionArg, ctx arg ContentQueryParameters.ExcludeSectionArg,
           ctx arg PaginationParameters.OrderDate, ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)

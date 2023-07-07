@@ -15,7 +15,9 @@ class FieldPermissions extends Middleware[GQLQueryContext] with MiddlewareAfterF
   override type QueryVal = this.type
   override type FieldVal = Unit
 
-  override def beforeQuery(context: MiddlewareQueryContext[GQLQueryContext, _, _]): FieldPermissions.this.type = this
+  override def beforeQuery(context: MiddlewareQueryContext[GQLQueryContext, _, _]): FieldPermissions.this.type = {
+    this
+  }
 
   override def afterQuery(queryVal: FieldPermissions.this.type, context: MiddlewareQueryContext[GQLQueryContext, _, _]): Unit = {
 

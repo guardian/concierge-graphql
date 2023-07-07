@@ -15,6 +15,7 @@ object ContentQueryParameters {
   val ExcludeTagArg = Argument("excludeTags", OptionInputType(ListInputType(StringType)), description = "don't include any articles with these tag IDs")
   val SectionArg = Argument("sectionId", OptionInputType(ListInputType(StringType)), description = "look up articles in any of these sections")
   val ExcludeSectionArg = Argument("excludeSections", OptionInputType(ListInputType(StringType)), description = "don't include any articles with these tag IDs")
+  val ChannelArg = Argument("channel", OptionInputType(StringType), description = "fetch content for this channel (only open to Internal tier keys)")
 
-  val AllContentQueryParameters = ContentIdArg :: QueryString :: QueryFields :: TagArg :: ExcludeTagArg :: SectionArg :: ExcludeSectionArg :: OrderBy :: OrderDate :: Cursor :: Limit :: Nil
+  val AllContentQueryParameters = ContentIdArg :: QueryString :: QueryFields :: TagArg :: ExcludeTagArg :: SectionArg :: ExcludeSectionArg :: ChannelArg :: OrderBy :: OrderDate :: Cursor :: Limit :: Nil
 }
