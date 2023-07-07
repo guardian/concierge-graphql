@@ -3,7 +3,7 @@ package com.gu.contentapi.porter.graphql
 import sangria.schema._
 import sangria.macros.derive._
 import com.gu.contentapi.porter.model
-import datastore.DocumentRepo
+import datastore.GQLQueryContext
 import io.circe.Json
 import io.circe.optics.JsonPath
 import io.circe.syntax._
@@ -38,10 +38,10 @@ object Atom {
     )
   )
 
-  val Atom = ObjectType[DocumentRepo, Json](
+  val Atom = ObjectType[GQLQueryContext, Json](
     "Atom",
     "A content atom, i.e. a piece of content that is embeddable within an article but with its own lifecycle",
-    ()=>fields[DocumentRepo,Json](
+    ()=>fields[GQLQueryContext,Json](
       Field("alternateIds",ListType(StringType), None,
         resolve=
           ctx=>JsonPath.root.alternateIds.arr
@@ -59,7 +59,7 @@ object Atom {
       Field("existsIn", RootQuery.ArticleEdge,
         description = Some("Search for articles that embed this atom"),
         arguments = ContentQueryParameters.AllContentQueryParameters,
-        resolve = ctx=> ctx.ctx.marshalledDocs(ctx arg ContentQueryParameters.QueryString, ctx arg ContentQueryParameters.QueryFields,
+        resolve = ctx=> ctx.ctx.repo.marshalledDocs(ctx arg ContentQueryParameters.QueryString, ctx arg ContentQueryParameters.QueryFields,
           JsonPath.root.id.string.getOption(ctx.value),
           ctx arg ContentQueryParameters.TagArg, ctx arg ContentQueryParameters.ExcludeTagArg,
           ctx arg ContentQueryParameters.SectionArg, ctx arg ContentQueryParameters.ExcludeSectionArg,

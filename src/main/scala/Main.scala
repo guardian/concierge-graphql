@@ -11,8 +11,9 @@ import org.http4s.ember.server._
 import org.http4s.implicits._
 import org.slf4j.LoggerFactory
 import security.Security.limitByTier
-import security.{InternalTier, UserTier}
+import security.{DeveloperTier, InternalTier, UserTier}
 import internalmetrics.PrometheusMetrics
+
 import scala.concurrent.duration._
 
 object Main extends IOApp {
@@ -28,8 +29,8 @@ object Main extends IOApp {
         headers=Headers("Access-Control-Allow-Origin" -> "*", "Access-Control-Allow-Methods"->"POST, GET, OPTIONS", "Access-Control-Allow-Headers" -> s"Content-Type, ${security.KongHeader.name}")
       ))
     case req @ POST -> Root / "query" =>
-      limitByTier(req, InternalTier) {
-        server.handleRequest(req)
+      limitByTier(req, DeveloperTier) { tier=>
+        server.handleRequest(req, tier)
           .compile
           .onlyOrError
           .flatten

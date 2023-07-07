@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter
 import io.circe.generic.auto._
 import io.circe.syntax._
 import com.gu.contentapi.porter.model
-import datastore.DocumentRepo
+import datastore.GQLQueryContext
 import sangria.macros.derive
 
 object Content {
@@ -104,22 +104,22 @@ object Content {
   implicit val ContentBlocks = deriveObjectType[Unit, model.ContentBlocks]()
   implicit val Reference = deriveObjectType[Unit, model.Reference]()
 
-  val Content = deriveObjectType[DocumentRepo, model.Content](
+  val Content = deriveObjectType[GQLQueryContext, model.Content](
     ReplaceField("webPublicationDate",
       Field("webPublicationDate", OptionType(StringType), resolve = _.value.webPublicationDate.map(_.format(DateTime.Formatter)))
     ),
-    ReplaceField("alternateIds", Field("alternateIds", ListType(StringType), arguments = AlternateIdParameters.AllAlternateIdParameters, resolve= AlternateIdParameters.Resolver[DocumentRepo])),
+    ReplaceField("alternateIds", Field("alternateIds", ListType(StringType), arguments = AlternateIdParameters.AllAlternateIdParameters, resolve= AlternateIdParameters.Resolver[GQLQueryContext])),
     ReplaceField("elements", Field("elements", OptionType(ListType(ContentElement)),resolve=_.value.elements.map(_.toSeq))),
     ReplaceField("atomIds", Field("atomIds", OptionType(ListType(Atom.SimpleAtom)), resolve=_.value.atomIds)),
     ReplaceField("tags", Field("tags", OptionType(ListType(Tags.Tag)),
       arguments = TagQueryParameters.NonPaginatedTagQueryParameters,
-      resolve=ctx=> ctx.ctx.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType))
+      resolve=ctx=> ctx.ctx.repo.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType))
     ),
     ExcludeFields("atomIds"),
     AddFields(
       Field("atoms", ListType(Atom.Atom),
         arguments=AtomQueryParameters.AtomType :: Nil,
-        resolve= ctx=>ctx.ctx.atomsForList(ctx.value.atomIds.getOrElse(Seq()).map(_.id), ctx arg AtomQueryParameters.AtomType))
+        resolve= ctx=>ctx.ctx.repo.atomsForList(ctx.value.atomIds.getOrElse(Seq()).map(_.id), ctx arg AtomQueryParameters.AtomType))
     )
   )
 

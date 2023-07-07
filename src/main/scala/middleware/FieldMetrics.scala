@@ -8,6 +8,7 @@ import sangria.execution.{BeforeFieldResult, Middleware, MiddlewareAfterField, M
 import sangria.schema.Context
 
 import scala.collection.concurrent.TrieMap
+import scala.concurrent.Future
 
 class FieldMetrics extends Middleware[Any] with MiddlewareAfterField[Any] with MiddlewareErrorField[Any] {
   private val logger = LoggerFactory.getLogger(getClass)

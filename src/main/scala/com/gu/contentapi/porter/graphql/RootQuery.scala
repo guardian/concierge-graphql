@@ -2,7 +2,7 @@ package com.gu.contentapi.porter.graphql
 
 import com.gu.contentapi.porter.model.{Content, Tag}
 import sangria.schema._
-import datastore.DocumentRepo
+import datastore.GQLQueryContext
 import deprecated.anotherschema.Edge
 import io.circe.Json
 
@@ -53,16 +53,16 @@ object RootQuery {
       throw new RuntimeException("Unable to marshal data")
   }
 
-  val Query = ObjectType[DocumentRepo, Unit](
-    "Query", fields[DocumentRepo, Unit](
+  val Query = ObjectType[GQLQueryContext, Unit](
+    "Query", fields[GQLQueryContext, Unit](
       Field("article", ArticleEdge,
         arguments = ContentQueryParameters.AllContentQueryParameters,
         resolve = ctx =>
           ctx arg ContentQueryParameters.ContentIdArg match {
             case Some(contentId) =>
-              ctx.ctx.docById(contentId).map(_.map(contentTransform))
+              ctx.ctx.repo.docById(contentId).map(_.map(contentTransform))
             case None =>
-              ctx.ctx
+              ctx.ctx.repo
                 .marshalledDocs(ctx arg ContentQueryParameters.QueryString, ctx arg ContentQueryParameters.QueryFields,
                   None,
                   ctx arg ContentQueryParameters.TagArg, ctx arg ContentQueryParameters.ExcludeTagArg,
@@ -73,12 +73,12 @@ object RootQuery {
       Field("tag", TagEdge,
         arguments = TagQueryParameters.AllTagQueryParameters,
         resolve = ctx =>
-          ctx.ctx.marshalledTags(ctx arg TagQueryParameters.tagId, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
+          ctx.ctx.repo.marshalledTags(ctx arg TagQueryParameters.tagId, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
       ),
       Field("atom", AtomEdge,
         arguments = AtomQueryParameters.AllParameters,
         resolve = ctx=>
-      ctx.ctx.atoms(ctx arg AtomQueryParameters.AtomIds, ctx arg AtomQueryParameters.QueryString, ctx arg AtomQueryParameters.QueryFields,
+      ctx.ctx.repo.atoms(ctx arg AtomQueryParameters.AtomIds, ctx arg AtomQueryParameters.QueryString, ctx arg AtomQueryParameters.QueryFields,
         ctx arg AtomQueryParameters.AtomType, ctx arg AtomQueryParameters.RevisionBefore, ctx arg AtomQueryParameters.RevisionAfter,
         ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor))
     )
