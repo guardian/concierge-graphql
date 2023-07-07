@@ -1,0 +1,59 @@
+{
+    atom {
+        totalCount
+        endCursor
+        nodes {
+            alternateIds
+            atomType
+            commissioningDesks
+            contentChangeDetails {
+                created {
+                    date
+                    user {
+                        email
+                    }
+                }
+                embargo {
+                    date
+                    user {
+                        email
+                    }
+                }
+                expiry {
+                    date
+                    user {
+                        email
+                    }
+                }
+                lastModified {
+                    date
+                    user {
+                        email
+                    }
+                }
+                published {
+                    date
+                    user {
+                        email
+                    }
+                }
+                revision
+                takenDown {
+                    date
+                    user {
+                        email
+                    }
+                }
+            }
+            existsIn {
+                totalCount
+                nodes {
+                    id
+                    webTitle
+                    webPublicationDate
+
+                }
+            }
+        }
+    }
+}
