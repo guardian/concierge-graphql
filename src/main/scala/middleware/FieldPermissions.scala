@@ -1,7 +1,6 @@
 package middleware
 
 import datastore.GQLQueryContext
-import middleware.FieldPermissions.restrictions
 import org.slf4j.LoggerFactory
 import sangria.execution.{BeforeFieldResult, Middleware, MiddlewareAfterField, MiddlewareBeforeField, MiddlewareQueryContext}
 import sangria.schema.Context
@@ -24,19 +23,19 @@ class FieldPermissions extends Middleware[GQLQueryContext] with MiddlewareAfterF
   }
 
   override def beforeField(queryVal: FieldPermissions.this.type, mctx: MiddlewareQueryContext[GQLQueryContext, _, _], ctx: Context[GQLQueryContext, _]): BeforeFieldResult[GQLQueryContext, FieldVal] = {
-    val fieldName = s"${ctx.parentType.name}.${ctx.field.name}"
+    import com.gu.contentapi.porter.graphql.permissions
+    val maybeRestriction = ctx.field.tags.collectFirst { case permissions.Restricted(tier) => tier }
 
-    val isAllowed = restrictions.get(fieldName) match {
-      case Some(restrictionLevel) =>
-        !(ctx.ctx.userTier < restrictionLevel)
-      case None =>
-        true
-    }
-
-    if (isAllowed) {
-      continue
-    } else {
-      throw Errors.PermissionDenied("This field is not permitted for your user tier")
+    maybeRestriction match {
+      case Some(restriction)=>
+        if(ctx.ctx.userTier < restriction) {
+          logger.info(s"denying access to ${ctx.field.name} because it is restricted to $restriction and user is ${ctx.ctx.userTier}")
+          throw Errors.PermissionDenied("This field is not permitted for your user tier")
+        } else {
+          continue
+        }
+      case None=>
+        continue
     }
   }
 
@@ -59,11 +58,4 @@ class FieldPermissions extends Middleware[GQLQueryContext] with MiddlewareAfterF
 
 object FieldPermissions {
   def singleton = new FieldPermissions
-
-  //All fields are open, but the ones below are only available to tiers equal to or higher than those given
-  val restrictions:Map[String, UserTier] = Map(
-    "Content.debug" -> InternalTier,
-    "Content.contentAliases"->InternalTier,
-    "Content.rights" -> RightsManagedTier,
-  )
 }
