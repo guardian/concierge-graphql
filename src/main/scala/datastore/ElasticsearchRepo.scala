@@ -258,8 +258,8 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     val sortParam = if (queryString.isDefined || atomIds.isDefined) {
       ScoreSort(orderBy.getOrElse(SortOrder.DESC))
     } else {
-      ScoreSort(orderBy.getOrElse(SortOrder.DESC))
-      //FieldSort("lastModified.date", order = orderBy.getOrElse(SortOrder.ASC))
+      //TODO: should offer a choice of sort field
+      FieldSort("contentChangeDetails.lastModified.date", order = orderBy.getOrElse(SortOrder.DESC))
     }
 
     val fieldsToQuery = queryFields
@@ -270,7 +270,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
       case (None, None) =>
         None
       case _ =>
-        Some(RangeQuery("revision", gt = revisionAfter, lt = revisionBefore))
+        Some(RangeQuery("contentChangeDetails.revision", gt = revisionAfter, lt = revisionBefore))
     }
 
     val params = Seq(
