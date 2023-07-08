@@ -11,18 +11,17 @@ import scala.util.Try
 class FieldPermissions extends Middleware[GQLQueryContext] with MiddlewareAfterField[GQLQueryContext] {
   private val logger = LoggerFactory.getLogger(getClass)
 
-  override type QueryVal = this.type
+  override type QueryVal = Unit
   override type FieldVal = Unit
 
-  override def beforeQuery(context: MiddlewareQueryContext[GQLQueryContext, _, _]): FieldPermissions.this.type = {
-    this
+  override def beforeQuery(context: MiddlewareQueryContext[GQLQueryContext, _, _]): Unit = {
   }
 
-  override def afterQuery(queryVal: FieldPermissions.this.type, context: MiddlewareQueryContext[GQLQueryContext, _, _]): Unit = {
+  override def afterQuery(queryVal: Unit, context: MiddlewareQueryContext[GQLQueryContext, _, _]): Unit = {
 
   }
 
-  override def beforeField(queryVal: FieldPermissions.this.type, mctx: MiddlewareQueryContext[GQLQueryContext, _, _], ctx: Context[GQLQueryContext, _]): BeforeFieldResult[GQLQueryContext, FieldVal] = {
+  override def beforeField(queryVal: Unit, mctx: MiddlewareQueryContext[GQLQueryContext, _, _], ctx: Context[GQLQueryContext, _]): BeforeFieldResult[GQLQueryContext, FieldVal] = {
     import com.gu.contentapi.porter.graphql.permissions
     val maybeRestriction = ctx.field.tags.collectFirst { case permissions.Restricted(tier) => tier }
 
@@ -39,8 +38,8 @@ class FieldPermissions extends Middleware[GQLQueryContext] with MiddlewareAfterF
     }
   }
 
-  override def afterField(queryVal: FieldPermissions.this.type, fieldVal: Unit, value: Any, mctx: MiddlewareQueryContext[GQLQueryContext, _, _], ctx: Context[GQLQueryContext, _]): Option[Any] = {
-    if(ctx.field.name=="channels" && ctx.ctx.userTier < InternalTier) {
+  override def afterField(queryVal: Unit, fieldVal: Unit, value: Any, mctx: MiddlewareQueryContext[GQLQueryContext, _, _], ctx: Context[GQLQueryContext, _]): Option[Any] = {
+    if(ctx.ctx.userTier < InternalTier && ctx.field.name=="channels") {
       //if we are _not_ in Internal tier, only show information about Open channel
       try {
         val channelsData = value.asInstanceOf[Seq[com.gu.contentapi.porter.model.ContentChannel]]
