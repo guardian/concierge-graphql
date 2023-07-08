@@ -7,8 +7,9 @@ import java.time.format.DateTimeFormatter
 import io.circe.generic.auto._
 import io.circe.syntax._
 import com.gu.contentapi.porter.model
-import datastore.DocumentRepo
+import datastore.GQLQueryContext
 import sangria.macros.derive
+import security.{InternalTier, RightsManagedTier}
 
 object Content {
   //here's a thought - wouldn't it be cool if we could specify a timezone in the query, have that timezone passed down in context, and output the data time in the requested TZ?
@@ -104,22 +105,43 @@ object Content {
   implicit val ContentBlocks = deriveObjectType[Unit, model.ContentBlocks]()
   implicit val Reference = deriveObjectType[Unit, model.Reference]()
 
-  val Content = deriveObjectType[DocumentRepo, model.Content](
+  val Content = deriveObjectType[GQLQueryContext, model.Content](
     ReplaceField("webPublicationDate",
-      Field("webPublicationDate", OptionType(StringType), resolve = _.value.webPublicationDate.map(_.format(DateTime.Formatter)))
+      Field("webPublicationDate", OptionType(StringType),
+        deprecationReason=Some("prefer channels[open].fields.publicationDate"),
+        resolve = _.value.webPublicationDate.map(_.format(DateTime.Formatter)))
     ),
-    ReplaceField("alternateIds", Field("alternateIds", ListType(StringType), arguments = AlternateIdParameters.AllAlternateIdParameters, resolve= AlternateIdParameters.Resolver[DocumentRepo])),
+    ReplaceField("alternateIds", Field("alternateIds", ListType(StringType), arguments = AlternateIdParameters.AllAlternateIdParameters, resolve= AlternateIdParameters.Resolver[GQLQueryContext])),
     ReplaceField("elements", Field("elements", OptionType(ListType(ContentElement)),resolve=_.value.elements.map(_.toSeq))),
     ReplaceField("atomIds", Field("atomIds", OptionType(ListType(Atom.SimpleAtom)), resolve=_.value.atomIds)),
+    ReplaceField("debug", Field(
+      "debug", OptionType(DebugFields),
+      description=Some("Internal debugging information. Only available to Internal level keys"),
+      tags=permissions.Restricted(InternalTier) :: Nil,
+      resolve=_.value.debug)
+    ),
+    ReplaceField("contentAliases", Field(
+      "contentAliases", OptionType(ContentAliases),
+      description=Some("Internal content aliasing information. Only available to Internal level keys"),
+      tags=permissions.Restricted(InternalTier) :: Nil,
+      resolve=_.value.contentAliases)
+    ),
+    ReplaceField("rights", Field(
+      "rights", OptionType(ContentRights),
+      description=Some("Internal rights management information. Only available to Internal and Rights Managed keys"),
+      tags = permissions.Restricted(RightsManagedTier) :: Nil,
+      resolve = _.value.rights)
+    ),
+
     ReplaceField("tags", Field("tags", OptionType(ListType(Tags.Tag)),
       arguments = TagQueryParameters.NonPaginatedTagQueryParameters,
-      resolve=ctx=> ctx.ctx.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType))
+      resolve=ctx=> ctx.ctx.repo.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType))
     ),
-    ExcludeFields("atomIds"),
+    ExcludeFields("atomIds", "isGone", "isExpired"),
     AddFields(
       Field("atoms", ListType(Atom.Atom),
         arguments=AtomQueryParameters.AtomType :: Nil,
-        resolve= ctx=>ctx.ctx.atomsForList(ctx.value.atomIds.getOrElse(Seq()).map(_.id), ctx arg AtomQueryParameters.AtomType))
+        resolve= ctx=>ctx.ctx.repo.atomsForList(ctx.value.atomIds.getOrElse(Seq()).map(_.id), ctx arg AtomQueryParameters.AtomType))
     )
   )
 

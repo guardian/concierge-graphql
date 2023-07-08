@@ -6,11 +6,13 @@ import fs2.Stream
 import org.http4s.dsl.io._
 import sangria.execution.Executor
 import sangria.renderer.SchemaRenderer
-import datastore.DocumentRepo
+import datastore.{DocumentRepo, GQLQueryContext}
 import sangria.marshalling.circe._
 import io.circe.syntax._
+import middleware.{FieldMetrics, FieldPermissions}
 import org.slf4j.LoggerFactory
 import sangria.ast.Document
+import security.UserTier
 import utils.GraphQLRequestBody
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -21,18 +23,17 @@ class GraphQLServer(documentRepo:DocumentRepo) {
   private val logger = LoggerFactory.getLogger(getClass)
   private val inUseSchema = com.gu.contentapi.porter.graphql.RootQuery.schema
 
+  private val metrics = FieldMetrics.singleton
+  private val permissions = FieldPermissions.singleton
+
   private def parser(content:String) = Stream.apply(QueryParser.parse(content))
 
-  def justATest:Future[String] = Future {
-    Thread.sleep(500)
-    "this is a test"
-  }
-
-  private def performQuery(doc:Document, variables:Option[Map[String,String]]) =
+  private def performQuery(doc:Document, variables:Option[Map[String,String]], tier:UserTier) =
     IO.fromFuture(
-      IO(
-        Executor.execute(inUseSchema, doc, userContext = documentRepo).map(_.asJson.noSpaces)
-      )
+      IO {
+        val context = GQLQueryContext(documentRepo, tier)
+        Executor.execute(inUseSchema, doc, middleware = permissions :: metrics :: Nil, userContext = context).map(_.asJson.noSpaces)
+      }
     )
     .map(body=>Ok(body))
     .handleError(err=>{
@@ -41,14 +42,14 @@ class GraphQLServer(documentRepo:DocumentRepo) {
     })
       .flatten
 
-  def handleRequest(req:Request[IO]) = {
+  def handleRequest(req:Request[IO], tier:UserTier) = {
     for {
       bodyText <- req.bodyText
       gqlRequest <- Stream.apply(GraphQLRequestBody.parseJsonRequest(bodyText))
       parsedQuery <- parser(gqlRequest.query)
       result <- parsedQuery match {
         case Success(doc)=>
-          Stream.apply(performQuery(doc, gqlRequest.variables))
+          Stream.apply(performQuery(doc, gqlRequest.variables, tier))
             .handleErrorWith(err => {
               logger.error("Error performing query", err)
               Stream.apply(InternalServerError(err.getMessage))

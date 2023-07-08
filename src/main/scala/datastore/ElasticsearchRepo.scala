@@ -8,7 +8,7 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
-import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, Query, RangeQuery}
+import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, NestedQuery, Query, RangeQuery}
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.queries.matches.{FieldWithOptionalBoost, MatchAllQuery, MatchQuery, MultiMatchQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, ScoreSort, Sort, SortOrder}
@@ -17,6 +17,7 @@ import io.circe.Json
 import org.slf4j.LoggerFactory
 import utils.RawResult
 import io.circe.generic.auto._
+import security.{InternalTier, UserTier}
 
 import scala.reflect.{ClassTag, classTag}
 
@@ -26,7 +27,15 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
 
   override def docById(id: String): Future[Edge[Json]] = {
     client.execute {
-      search("content").query(MatchQuery("id", id)).sortByFieldDesc("webPublicationDate")
+      search("content")
+        .query(
+          BoolQuery(must=Seq(
+            MatchQuery("id", id),
+            MatchQuery("isGone", false),
+            MatchQuery("isExpired", false),
+          ))
+        )
+        .sortByFieldDesc("webPublicationDate")
     }.flatMap(response=>{
       if(response.isSuccess) {
         response
@@ -108,25 +117,20 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
       None
   }
 
-  override def docsByWebTitle(webTitle: String, orderDate:Option[String], orderBy:Option[SortOrder], limit:Option[Int], cursor:Option[String]): Future[Edge[Json]] = {
-    val pageSize = limit.getOrElse(defaultPageSize)
+  private def limitToChannelQuery(channel:String):Query = NestedQuery(
+    path="channels",
+    query=BoolQuery(must=Seq(
+      MatchQuery("channels.channelId", channel),
+      MatchQuery("channels.fields.isAvailable", true)
+    ))
+  )
 
-    Edge.decodeCursor(cursor) match {
-      case Right(maybeCursor) =>
-        client.execute {
-          search("content")
-            .query(MatchQuery("webTitle", webTitle))
-            .sortBy(defaultingSortParam(orderDate, orderBy))
-            .limit(pageSize)
-            .searchAfter(maybeCursor)
-        }.flatMap(handleResponseMultiple(_, pageSize)(identityTransform))
-      case Left(err) =>
-        Future.failed(new RuntimeException(s"Unable to decode cursor value $cursor: $err"))
-    }
-  }
-
+  private val standardAvailabilityQuery:Seq[Query] = Seq(
+    MatchQuery("isExpired", false),
+    MatchQuery("isGone", false),
+  )
   override def marshalledDocs(queryString: Option[String], queryFields: Option[Seq[String]],
-                              atomId: Option[String],
+                              atomId: Option[String], forChannel:Option[String], userTier:UserTier,
                               tagIds: Option[Seq[String]], excludeTags: Option[Seq[String]],
                               sectionIds: Option[Seq[String]], excludeSections: Option[Seq[String]],
                               orderDate: Option[String], orderBy: Option[SortOrder],
@@ -137,7 +141,11 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
       .getOrElse(Seq("webTitle", "path"))  //default behaviour from Concierge
       .map(FieldWithOptionalBoost(_, None))
 
-    val params:Seq[Query] = Seq(
+    //only internal tier users are allowed to query other channels
+    val selectedChannel = if(userTier==InternalTier) forChannel.getOrElse("open") else "open"
+
+    val params:Seq[Query] = standardAvailabilityQuery ++ Seq(
+      Some(limitToChannelQuery(selectedChannel)),
       queryString.map(MultiMatchQuery(_, fields = fieldsToQuery)),
       atomId.map(MatchQuery("atomIds.id", _)),
       tagIds.map(tags=>BoolQuery(must=tags.map(MatchQuery("tags", _)))) ,
