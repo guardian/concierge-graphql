@@ -1,6 +1,6 @@
 package datastore
 
-import com.gu.contentapi.porter.model.{Content, Tag}
+import com.gu.contentapi.porter.model.{Content, Section, Tag}
 import com.sksamuel.elastic4s.requests.searches.sort.SortOrder
 import deprecated.anotherschema.Edge
 import io.circe.Json
@@ -32,4 +32,5 @@ trait DocumentRepo {
             revisionBefore: Option[Long], revisionAfter: Option[Long],
             orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Json]]
 
+  def sectionForId(sectionId:String):Future[Option[Section]]
 }

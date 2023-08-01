@@ -105,6 +105,18 @@ object Content {
   implicit val ContentBlocks = deriveObjectType[Unit, model.ContentBlocks]()
   implicit val Reference = deriveObjectType[Unit, model.Reference]()
 
+  implicit val SectionEdition = deriveObjectType[Unit, model.SectionEdition]()
+  private val SectionCodeArg = Argument("code", OptionInputType(StringType))
+  implicit val Section = deriveObjectType[Unit, model.Section](
+    AddFields(
+      Field("webPath", OptionType(StringType),
+        arguments = SectionCodeArg :: Nil,
+        resolve= ctx=>ctx.value.editions.find(_.code==(ctx arg SectionCodeArg).getOrElse( "default")).map(_.path))
+    )
+  )
+
+  private val TimeFormatArg = Argument("format", StringType)
+
   val Content = deriveObjectType[GQLQueryContext, model.Content](
     ReplaceField("webPublicationDate",
       Field("webPublicationDate", OptionType(StringType),
@@ -137,11 +149,19 @@ object Content {
       arguments = TagQueryParameters.NonPaginatedTagQueryParameters,
       resolve=ctx=> ctx.ctx.repo.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType))
     ),
-    ExcludeFields("atomIds", "isGone", "isExpired"),
+    ExcludeFields("atomIds", "isGone", "isExpired", "sectionId"),
     AddFields(
       Field("atoms", ListType(Atom.Atom),
         arguments=AtomQueryParameters.AtomType :: Nil,
-        resolve= ctx=>ctx.ctx.repo.atomsForList(ctx.value.atomIds.getOrElse(Seq()).map(_.id), ctx arg AtomQueryParameters.AtomType))
+        resolve= ctx=>ctx.ctx.repo.atomsForList(ctx.value.atomIds.getOrElse(Seq()).map(_.id), ctx arg AtomQueryParameters.AtomType)),
+      Field("section", OptionType(Section), resolve= ctx=>ctx.ctx.repo.sectionForId(ctx.value.sectionId)),
+      Field("webPublicationSecondaryDateDisplay", OptionType(StringType),
+        arguments=TimeFormatArg :: Nil,
+        resolve = ctx=> {
+          val formatter = DateTimeFormatter.ofPattern(ctx arg TimeFormatArg)
+          ctx.value.webPublicationDate.map(_.format(formatter))
+        }
+      )
     )
   )
 

@@ -1,6 +1,6 @@
 package datastore
 
-import com.gu.contentapi.porter.model.{Content, Tag}
+import com.gu.contentapi.porter.model.{Content, Section, Tag}
 import com.sksamuel.elastic4s.sttp.SttpRequestHttpClient
 import com.sksamuel.elastic4s.{ElasticClient, ElasticNodeEndpoint, Response}
 import com.sksamuel.elastic4s.ElasticDsl._
@@ -78,6 +78,21 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
+  /**
+   * handleResponseMultiple is responsible for unmarshalling content and metadata from an elastic4s Response object
+   * and returning it as an Edge object.
+   * The hits data is unmarshalled into a sequence of the generic type D, by mapping over the `mapper` function which should
+   * convert the circe json into an object of type D and return None if it fails.
+   * If the response fails, then a failure is returned
+   * @param response The response to marshal
+   * @param pageSize the requested page size
+   * @param mapper a function that takes a Json representation of a single item and marshals it into the required output type.
+   *               It must return an Option, if it fails then None should be returned and the result will be dropped from the final result
+   * @param ct implicitly provided ClassTag for marshalling the data. The compiler fails without this, but the param is automatically
+   *           supplied for case classes
+   * @tparam D the data type that each hit will be marshalled into
+   * @return a Future, containing a populated Edge including all pagination parameters and the content as a list
+   */
   private def handleResponseMultiple[D:io.circe.Decoder](response:Response[SearchResponse], pageSize:Int)(mapper:(Json)=>Option[D])(implicit ct:ClassTag[D]):Future[Edge[D]] = {
     if(response.isSuccess) {
       val allResults = response
@@ -335,5 +350,35 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     val pageSize = limit.getOrElse(defaultPageSize)
 
     findAtoms(atomIds, queryString, queryFields, atomType, revisionBefore, revisionAfter, orderBy, limit, cursor).flatMap(handleResponseMultiple(_, pageSize)(identityTransform))
+  }
+
+  override def sectionForId(sectionId:String):Future[Option[Section]] = {
+    client.execute {
+      search("section")
+        .query(MatchQuery("id", sectionId))
+    }.flatMap(response=>{
+      if(response.isError) {
+        logger.error(s"Unable to query Elasticsearch for section $sectionId: ${response.error.toString}")
+        Future.failed(response.error.asException)
+      } else {
+        Future(
+          for {
+            hit <- response.result.hits.hits.headOption
+            raw <- RawResult(hit) match {
+              case Right(r)=>Some(r)
+              case Left(err)=>
+                logger.error(s"$err")
+                None
+            }
+            section <- raw.content.as[Section] match {
+              case Right(s)=>Some(s)
+              case Left(err)=>
+                logger.error(s"$err")
+                None
+            }
+          } yield section
+        )
+      }
+    })
   }
 }
