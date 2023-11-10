@@ -19,7 +19,7 @@ import scala.concurrent.duration._
 object Main extends IOApp {
   private val logger = LoggerFactory.getLogger(getClass)
   DefaultExports.initialize()
-  val documentRepo = new ElasticsearchRepo(ElasticNodeEndpoint("http","localhost",9200, None))
+  val documentRepo = new ElasticsearchRepo(ElasticSearchResolver.resolve())
   val server = new GraphQLServer(documentRepo)
 
   val graphqlService = HttpRoutes.of[IO] {

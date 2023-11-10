@@ -1,4 +1,4 @@
-enablePlugins(DebianPlugin, JavaServerAppPackaging, SystemdPlugin)
+enablePlugins(DebianPlugin, JavaServerAppPackaging, SystemdPlugin, DockerPlugin, AshScriptPlugin)
 
 ThisBuild / version := "0.1.0"
 
@@ -14,6 +14,7 @@ val prometheusVersion = "0.16.0"
 lazy val root = (project in file("."))
   .settings(
     name := "concierge-graphql",
+    dockerBaseImage := "amazoncorretto:17-alpine",
     libraryDependencies ++= Seq(
       "org.http4s" %% "http4s-core" % "0.23.21",
       "org.http4s" %% "http4s-dsl" % "0.23.21",
@@ -48,3 +49,4 @@ lazy val root = (project in file("."))
       "io.netty" % "netty-codec-http" % "4.1.94.Final",
     )
   )
+
