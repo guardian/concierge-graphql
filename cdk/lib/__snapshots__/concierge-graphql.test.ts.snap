@@ -840,6 +840,9 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "Type": "AWS::EC2::SecurityGroupIngress",
     },
     "contentapiTESTconciergegraphqlAFB69E52": {
+      "DependsOn": [
+        "InstanceRoleConciergegraphql96280BE9",
+      ],
       "Properties": {
         "LaunchTemplateData": {
           "IamInstanceProfile": {
