@@ -38,7 +38,7 @@ jobs:
           JAVA_OPTS: -Dsbt.log.noformat=true
           BUILD_NUMBER: ${{ github.run_number }}
         run: |
-          sbt 'test;docker:publishLocal'
+          sbt 'test;docker:publish'
 
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
