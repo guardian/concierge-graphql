@@ -36,11 +36,10 @@ spec:
     spec:
       containers:
         - name: concierge-graphql
-          image: andyg42/concierge-graphql:DEV
+          image: ghcr.io/guardian/concierge-graphql/concierge-graphql:3
           env: 
           - name: ELASTICSEARCH_HOST
             value: capi-elasticsearch
-          imagePullPolicy: Always
           ports:
             - containerPort: 9000
           readinessProbe:
