@@ -4,12 +4,12 @@ metadata:
   labels:
     service: graphiql-server
     stack: graphiql-server
-  name: graphiql-server
+  name: graphiql-explorer
 spec:
   ports:
     - name: webapp
-      port: 9000
-      targetPort: 9000
+      port: 80 
+      targetPort: 80
   selector:
     service: graphiql-server
     stack: graphiql-server
@@ -36,9 +36,9 @@ spec:
     spec:
       containers:
         - name: graphiql-server
-          image: ghcr.io/guardian/concierge-graphql/graphiql-server:3
+          image: ghcr.io/guardian/concierge-graphql/graphiql-explorer:6
           ports:
-            - containerPort: 9000
+            - containerPort: 80 
           readinessProbe:
             httpGet:
               path: /
