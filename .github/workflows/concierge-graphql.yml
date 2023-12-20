@@ -1,4 +1,4 @@
-name: Build and upload
+name: Concierge GraphQL
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  graphiql-explorer:
+  concierge-graphql:
     runs-on: ubuntu-latest
 
     # The first two permissions are needed to interact with GitHub's OIDC Token endpoint.

@@ -6,7 +6,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  concierge-graphql:
+  graphiql-explorer:
     runs-on: ubuntu-latest
 
     # The first two permissions are needed to interact with GitHub's OIDC Token endpoint.
