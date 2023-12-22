@@ -1,11 +1,12 @@
 package utils
 
+import io.circe.Json
 import io.circe.generic.auto._
 import org.slf4j.LoggerFactory
 
-case class GraphQLRequestBody(query:String, operationName:Option[String], variables:Option[Map[String,String]])
+case class GraphQLRequestBody(query:String, operationName:Option[String], variables:Option[Json])
 
-object GraphQLRequestBody extends ((String, Option[String], Option[Map[String, String]])=>GraphQLRequestBody){
+object GraphQLRequestBody extends ((String, Option[String], Option[Json])=>GraphQLRequestBody){
   private val logger = LoggerFactory.getLogger(getClass)
 
   def parseJsonRequest(content:String):GraphQLRequestBody = {

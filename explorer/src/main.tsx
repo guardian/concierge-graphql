@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 
 import 'graphiql/graphiql.css';
 
-const fetcher = createGraphiQLFetcher({ url: "/query", headers: {'X-Consumer-Username': ":internal"} });
+const fetcher = createGraphiQLFetcher({ url: "http://localhost:4000/graphql", headers: {'X-Consumer-Username': ":internal"} });
 
 const rootElem = document.createElement('div');
 rootElem.setAttribute("style","height: 100vh");

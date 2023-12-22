@@ -7,6 +7,7 @@ import org.http4s.dsl.io._
 import sangria.execution.Executor
 import sangria.renderer.SchemaRenderer
 import datastore.{DocumentRepo, GQLQueryContext}
+import io.circe.Json
 import sangria.marshalling.circe._
 import io.circe.syntax._
 import middleware.{FieldMetrics, FieldPermissions}
@@ -20,6 +21,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 class GraphQLServer(documentRepo:DocumentRepo) {
+  import CirceInputUnmarshaller._
   private val logger = LoggerFactory.getLogger(getClass)
   private val inUseSchema = com.gu.contentapi.porter.graphql.RootQuery.schema
 
@@ -28,11 +30,12 @@ class GraphQLServer(documentRepo:DocumentRepo) {
 
   private def parser(content:String) = Stream.apply(QueryParser.parse(content))
 
-  private def performQuery(doc:Document, variables:Option[Map[String,String]], tier:UserTier) =
+  private def performQuery(doc:Document, variables:Option[Json], tier:UserTier) =
     IO.fromFuture(
       IO {
         val context = GQLQueryContext(documentRepo, tier)
-        Executor.execute(inUseSchema, doc, middleware = permissions :: metrics :: Nil, userContext = context).map(_.asJson.noSpaces)
+        Executor.execute(inUseSchema, doc, middleware = permissions :: metrics :: Nil, userContext = context, variables = variables.getOrElse(Json.Null))
+          .map(_.asJson.noSpaces)
       }
     )
     .map(body=>Ok(body))
