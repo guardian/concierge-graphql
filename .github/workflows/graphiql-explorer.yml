@@ -45,7 +45,6 @@ jobs:
         name: Build explorer
         working-directory: explorer
 
-
       - name: Build and push
         uses: docker/build-push-action@v5
         with:

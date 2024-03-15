@@ -42,7 +42,7 @@ export class ConciergeGraphql extends GuStack {
 
     const app = new GuPlayApp(this, {
       access: {
-        //You should put Kong gateway in front of this
+        //You should put a gateway in front of this
         scope: AccessScope.INTERNAL,
         cidrRanges: [Peer.ipv4("10.0.0.0/8")],
       },
