@@ -1,7 +1,5 @@
 import cats.effect._
-import cats.effect.unsafe.implicits.global
 import com.comcast.ip4s.{IpLiteralSyntax, Ipv4Address, Ipv6Address}
-import com.sksamuel.elastic4s.ElasticNodeEndpoint
 import datastore.ElasticsearchRepo
 import io.prometheus.client.hotspot.DefaultExports
 import org.http4s._
