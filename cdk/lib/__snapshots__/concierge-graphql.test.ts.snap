@@ -400,6 +400,27 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
     },
+    "GuHttpsEgressSecurityGroupConciergegraphqlfromConciergeGraphqlLinkageSGConciergegraphqlB4BBACD5900025BE65A9": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 9000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "GuHttpsEgressSecurityGroupConciergegraphql1855BF47",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "LinkageSGConciergegraphql642E0A21",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
     "GuHttpsEgressSecurityGroupConciergegraphqlfromConciergeGraphqlLoadBalancerConciergegraphqlSecurityGroup9A9241C7900098F0B65A": {
       "Properties": {
         "Description": "Load balancer to target",
@@ -675,6 +696,12 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
           {
             "Fn::GetAtt": [
               "InternalIngressSecurityGroupConciergegraphqlA6B6FA94",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "LinkageSGConciergegraphql642E0A21",
               "GroupId",
             ],
           },
@@ -1027,6 +1054,27 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         "SourceSecurityGroupId": {
           "Fn::GetAtt": [
             "InternalIngressSecurityGroupConciergegraphqlA6B6FA94",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "WazuhSecurityGroupfromConciergeGraphqlLinkageSGConciergegraphqlB4BBACD590001E26A8A8": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 9000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "WazuhSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "LinkageSGConciergegraphql642E0A21",
             "GroupId",
           ],
         },

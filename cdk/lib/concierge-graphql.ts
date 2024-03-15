@@ -78,10 +78,8 @@ export class ConciergeGraphql extends GuStack {
       app: props.app ?? "concierge-graphql",
       vpc,
     });
+    loadBalancer.addSecurityGroup(linkageSG);
 
-    // const subnets:SubnetSelection = {
-    //   subnets:
-    // }
     const subnets = GuVpc.subnets(this, subnetsList.valueAsList);
 
     new HttpGateway(this, "GW", {
