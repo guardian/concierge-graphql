@@ -1,5 +1,10 @@
 regions:
   - eu-west-1
+allowedStages:
+  - CODE-AARDVARK
+  - PROD-AARDVARK
+  - CODE-ZEBRA
+  - PROD-ZEBRA
 deployments:
   cloudformation:
     type: cloud-formation

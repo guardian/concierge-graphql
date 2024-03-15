@@ -307,50 +307,6 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       },
       "Type": "AWS::ApiGatewayV2::VpcLink",
     },
-    "GWGQLUsagePlanDDFEB42C": {
-      "DependsOn": [
-        "GWApiGWDefaultRouteDefaultIntegration60DE663E",
-        "GWApiGWDefaultRoute7E891A48",
-        "GWApiGWDefaultStage62BBA833",
-        "GWApiGW36D3A369",
-      ],
-      "Properties": {
-        "ApiStages": [
-          {
-            "ApiId": {
-              "Ref": "GWApiGW36D3A369",
-            },
-            "Stage": "$default",
-            "Throttle": {
-              "$default": {
-                "BurstLimit": 150,
-                "RateLimit": 50,
-              },
-            },
-          },
-        ],
-        "Description": "Usage plan for access to concierge-graphql",
-        "Tags": [
-          {
-            "Key": "gu:cdk:version",
-            "Value": "TEST",
-          },
-          {
-            "Key": "gu:repo",
-            "Value": "guardian/concierge-graphql",
-          },
-          {
-            "Key": "Stack",
-            "Value": "content-api",
-          },
-          {
-            "Key": "Stage",
-            "Value": "TEST",
-          },
-        ],
-      },
-      "Type": "AWS::ApiGateway::UsagePlan",
-    },
     "GetDistributablePolicyConciergegraphql510C52ED": {
       "Properties": {
         "PolicyDocument": {
