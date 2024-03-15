@@ -1,22 +1,12 @@
 import type {GuStackProps} from "@guardian/cdk/lib/constructs/core";
 import {GuParameter, GuStack} from "@guardian/cdk/lib/constructs/core";
 import type {App} from "aws-cdk-lib";
+import {aws_ssm} from "aws-cdk-lib";
 import {GuPlayApp} from "@guardian/cdk";
-import {
-  InstanceClass,
-  InstanceSize,
-  InstanceType,
-  ISubnet,
-  Peer,
-  Port,
-  Subnet,
-  SubnetSelection,
-  Vpc
-} from "aws-cdk-lib/aws-ec2";
+import {InstanceClass, InstanceSize, InstanceType, Peer, Subnet, Vpc} from "aws-cdk-lib/aws-ec2";
 import {AccessScope} from "@guardian/cdk/lib/constants";
-import {aws_ssm, Fn} from "aws-cdk-lib";
 import {getHostName} from "./hostname";
-import {GuSecurityGroup} from "@guardian/cdk/lib/constructs/ec2";
+import {GuSecurityGroup, GuVpc, SubnetType} from "@guardian/cdk/lib/constructs/ec2";
 import {HttpGateway} from "./gateway";
 
 export class ConciergeGraphql extends GuStack {
@@ -92,13 +82,16 @@ export class ConciergeGraphql extends GuStack {
     // const subnets:SubnetSelection = {
     //   subnets:
     // }
+    const subnets = GuVpc.subnets(this, subnetsList.valueAsList);
+
     new HttpGateway(this, "GW", {
       stage: props.stage as "CODE"|"PROD",
       backendLoadbalancer: loadBalancer,
+      previewMode,
       backendListener: listener,
       backendLbIncomingSg: linkageSG,
       subnets: {
-        subnets: this.subnetsFromTokenList(subnetsList.valueAsList, "DeploymentSubnet"), //subnetsList.valueAsList.map(sid=>Subnet.fromSubnetId(this, sid, sid)),
+        subnets,
       },
       vpc
     });
@@ -151,13 +144,4 @@ export class ConciergeGraphql extends GuStack {
     return this.getAccountPath(scope, isPreview,"subnets")
   }
 
-  subnetsFromTokenList(list:string[],paramName:string):ISubnet[] {
-    let result:ISubnet[]=[];
-
-    for(let i=0;i<list.length;i++) {
-      const subnetId = Fn.select(i, list);
-      result.push(Subnet.fromSubnetId(this, `${paramName}${i}`, subnetId))
-    }
-    return result;
-  }
 }

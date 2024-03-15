@@ -10,6 +10,7 @@ import {IApplicationListener} from "aws-cdk-lib/aws-elasticloadbalancingv2/lib/a
 
 interface HttpGatewayProps {
     stage: "CODE"|"PROD";
+    previewMode: boolean;
     backendLoadbalancer: IApplicationLoadBalancer;
     backendListener: IApplicationListener;
     backendLbIncomingSg: ISecurityGroup;
@@ -40,8 +41,10 @@ export class HttpGateway extends Construct {
             vpcLinkName: `VpcLink-concierge-graphql-${props.stage}`
         });
 
+        const maybePreview = props.previewMode ? "preview-" : "";
         const httpApi = new HttpApi(this, "ApiGW", {
-            description: `Gateway for the ${props.stage} concierge-graphql instance`,
+            apiName: `concierge-graphql-${maybePreview}${props.stage}`,
+            description: `Gateway for the ${props.stage} concierge-graphql${maybePreview} instance`,
             defaultIntegration: new HttpAlbIntegration('DefaultIntegration', props.backendListener, {
                 vpcLink,
                 secureServerName: props.backendLoadbalancer.loadBalancerDnsName,

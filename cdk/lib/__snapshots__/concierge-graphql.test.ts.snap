@@ -210,7 +210,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     "GWApiGW36D3A369": {
       "Properties": {
         "Description": "Gateway for the TEST concierge-graphql instance",
-        "Name": "ApiGW",
+        "Name": "concierge-graphql-TEST",
         "ProtocolType": "HTTP",
         "Tags": {
           "Stack": "content-api",
@@ -295,16 +295,9 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
             ],
           },
         ],
-        "SubnetIds": [
-          {
-            "Fn::Select": [
-              0,
-              {
-                "Ref": "subnets",
-              },
-            ],
-          },
-        ],
+        "SubnetIds": {
+          "Ref": "subnets",
+        },
         "Tags": {
           "Stack": "content-api",
           "Stage": "TEST",
