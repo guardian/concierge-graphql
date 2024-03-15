@@ -67,6 +67,8 @@ jobs:
           sbt 'test;debian:packageBin'
       - uses: guardian/actions-riff-raff@v4
         with:
+          roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
           configPath: ./riff-raff.yaml
           projectName: Content Platforms::concierge-graphql-experimental
           contentDirectories: |
