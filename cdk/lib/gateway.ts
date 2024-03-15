@@ -49,21 +49,21 @@ export class HttpGateway extends Construct {
             createDefaultStage: true,
         });
 
-        const plan = new CfnUsagePlan(this, "GQLUsagePlan", {
-            apiStages: [
-                {
-                    apiId: httpApi.apiId,
-                    stage: httpApi.defaultStage?.stageName,
-                    throttle: {
-                        "$default": {
-                            burstLimit: 150,
-                            rateLimit: 50
-                        }
-                    }
-                }
-            ],
-            description: "Usage plan for access to concierge-graphql"
-        });
+        // const plan = new CfnUsagePlan(this, "GQLUsagePlan", {
+        //     apiStages: [
+        //         {
+        //             apiId: httpApi.apiId,
+        //             stage: httpApi.defaultStage?.stageName,
+        //             throttle: {
+        //                 "$default": {
+        //                     burstLimit: 150,
+        //                     rateLimit: 50
+        //                 }
+        //             }
+        //         }
+        //     ],
+        //     description: "Usage plan for access to concierge-graphql"
+        // });
 
     }
 }
