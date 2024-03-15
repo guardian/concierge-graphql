@@ -1,12 +1,12 @@
 name: Build and upload
 
-#on:
-#  push:
-#    branchs: ["main"]
-#  workflow_dispatch: {}
+on:
+  push:
+    branches: ["*"]
+  workflow_dispatch: {}
 
 jobs:
-  concierge-graphql:
+  concierge-graphql-gnm:
     runs-on: ubuntu-latest
 
     # The first two permissions are needed to interact with GitHub's OIDC Token endpoint.
@@ -23,17 +23,17 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version: 20.x
           cache: 'yarn'
-          cache-dependency-path: explorer/yarn.lock
+          cache-dependency-path: cdk/yarn.lock
 
-      - run: yarn install --frozen-lockfile
-        name: Prepare to build explorer
-        working-directory: explorer
-
-      - run: yarn build
-        name: Build explorer
-        working-directory: explorer
+#      - run: yarn install --frozen-lockfile
+#        name: Prepare to build explorer
+#        working-directory: explorer
+#
+#      - run: yarn build
+#        name: Build explorer
+#        working-directory: explorer
 
       - run: yarn install --frozen-lockfile
         name: Prepare for CDK infrastructure build
@@ -52,12 +52,12 @@ jobs:
           java-version: 11
           cache: sbt
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: eu-west-1
-          role-to-assume: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
-          role-session-name: content-api-concierge-graphql-build
+#      - name: Configure AWS Credentials
+#        uses: aws-actions/configure-aws-credentials@v1
+#        with:
+#          aws-region: eu-west-1
+#          role-to-assume: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
+#          role-session-name: content-api-concierge-graphql-build
 
       - name: Build and test
         env:
@@ -65,7 +65,7 @@ jobs:
           JAVA_OPTS: -Dsbt.log.noformat=true
         run: |
           sbt 'test;debian:packageBin'
-      - uses: guardian/actions-riff-raff@v2
+      - uses: guardian/actions-riff-raff@v4
         with:
           configPath: ./riff-raff.yaml
           projectName: Content Platforms::concierge-graphql-experimental
