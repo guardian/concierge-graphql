@@ -24,6 +24,8 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "GuApplicationTargetGroup",
       "GuHttpsApplicationListener",
       "GuSecurityGroup",
+      "GuSecurityGroup",
+      "GuSecurityGroup",
     ],
     "gu:cdk:version": "TEST",
   },
@@ -204,6 +206,151 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         ],
       },
       "Type": "AWS::IAM::Policy",
+    },
+    "GWApiGW36D3A369": {
+      "Properties": {
+        "Description": "Gateway for the TEST concierge-graphql instance",
+        "Name": "ApiGW",
+        "ProtocolType": "HTTP",
+        "Tags": {
+          "Stack": "content-api",
+          "Stage": "TEST",
+          "gu:cdk:version": "TEST",
+          "gu:repo": "guardian/concierge-graphql",
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Api",
+    },
+    "GWApiGWDefaultRoute7E891A48": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "GWApiGW36D3A369",
+        },
+        "AuthorizationType": "NONE",
+        "RouteKey": "$default",
+        "Target": {
+          "Fn::Join": [
+            "",
+            [
+              "integrations/",
+              {
+                "Ref": "GWApiGWDefaultRouteDefaultIntegration60DE663E",
+              },
+            ],
+          ],
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Route",
+    },
+    "GWApiGWDefaultRouteDefaultIntegration60DE663E": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "GWApiGW36D3A369",
+        },
+        "ConnectionId": {
+          "Ref": "GWApiGWVPC54C274C5",
+        },
+        "ConnectionType": "VPC_LINK",
+        "IntegrationMethod": "ANY",
+        "IntegrationType": "HTTP_PROXY",
+        "IntegrationUri": {
+          "Ref": "ListenerConciergegraphqlA8836197",
+        },
+        "PayloadFormatVersion": "1.0",
+        "TlsConfig": {
+          "ServerNameToVerify": {
+            "Fn::GetAtt": [
+              "LoadBalancerConciergegraphql238A0C8B",
+              "DNSName",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Integration",
+    },
+    "GWApiGWDefaultStage62BBA833": {
+      "Properties": {
+        "ApiId": {
+          "Ref": "GWApiGW36D3A369",
+        },
+        "AutoDeploy": true,
+        "StageName": "$default",
+        "Tags": {
+          "Stack": "content-api",
+          "Stage": "TEST",
+          "gu:cdk:version": "TEST",
+          "gu:repo": "guardian/concierge-graphql",
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::Stage",
+    },
+    "GWApiGWVPC54C274C5": {
+      "Properties": {
+        "Name": "VpcLink-concierge-graphql-TEST",
+        "SecurityGroupIds": [
+          {
+            "Fn::GetAtt": [
+              "VpcLinkSGConciergegraphqlDF39722B",
+              "GroupId",
+            ],
+          },
+        ],
+        "SubnetIds": [
+          {
+            "Fn::Select": [
+              0,
+              {
+                "Ref": "subnets",
+              },
+            ],
+          },
+        ],
+        "Tags": {
+          "Stack": "content-api",
+          "Stage": "TEST",
+          "gu:cdk:version": "TEST",
+          "gu:repo": "guardian/concierge-graphql",
+        },
+      },
+      "Type": "AWS::ApiGatewayV2::VpcLink",
+    },
+    "GWGQLUsagePlanDDFEB42C": {
+      "Properties": {
+        "ApiStages": [
+          {
+            "ApiId": {
+              "Ref": "GWApiGW36D3A369",
+            },
+            "Stage": "$default",
+            "Throttle": {
+              "$default": {
+                "BurstLimit": 150,
+                "RateLimit": 50,
+              },
+            },
+          },
+        ],
+        "Description": "Usage plan for access to concierge-graphql",
+        "Tags": [
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/concierge-graphql",
+          },
+          {
+            "Key": "Stack",
+            "Value": "content-api",
+          },
+          {
+            "Key": "Stage",
+            "Value": "TEST",
+          },
+        ],
+      },
+      "Type": "AWS::ApiGateway::UsagePlan",
     },
     "GetDistributablePolicyConciergegraphql510C52ED": {
       "Properties": {
@@ -482,6 +629,44 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         "ToPort": 9000,
       },
       "Type": "AWS::EC2::SecurityGroupEgress",
+    },
+    "LinkageSGConciergegraphql642E0A21": {
+      "Properties": {
+        "GroupDescription": "ConciergeGraphql/LinkageSGConciergegraphql",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "App",
+            "Value": "concierge-graphql",
+          },
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/concierge-graphql",
+          },
+          {
+            "Key": "Stack",
+            "Value": "content-api",
+          },
+          {
+            "Key": "Stage",
+            "Value": "TEST",
+          },
+        ],
+        "VpcId": {
+          "Ref": "vpcId",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
     },
     "ListenerConciergegraphqlA8836197": {
       "Properties": {
@@ -784,6 +969,51 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         },
       },
       "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+    },
+    "VpcLinkSGConciergegraphqlDF39722B": {
+      "Properties": {
+        "GroupDescription": "ConciergeGraphql/VpcLinkSGConciergegraphql",
+        "SecurityGroupEgress": [
+          {
+            "Description": "Access to incoming security group of the backend loadbalancer",
+            "DestinationSecurityGroupId": {
+              "Fn::GetAtt": [
+                "LinkageSGConciergegraphql642E0A21",
+                "GroupId",
+              ],
+            },
+            "FromPort": 443,
+            "IpProtocol": "tcp",
+            "ToPort": 443,
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "App",
+            "Value": "concierge-graphql",
+          },
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/concierge-graphql",
+          },
+          {
+            "Key": "Stack",
+            "Value": "content-api",
+          },
+          {
+            "Key": "Stage",
+            "Value": "TEST",
+          },
+        ],
+        "VpcId": {
+          "Ref": "vpcId",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
     },
     "WazuhSecurityGroup": {
       "Properties": {

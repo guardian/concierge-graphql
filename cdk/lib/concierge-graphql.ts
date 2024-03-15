@@ -2,11 +2,22 @@ import type {GuStackProps} from "@guardian/cdk/lib/constructs/core";
 import {GuParameter, GuStack} from "@guardian/cdk/lib/constructs/core";
 import type {App} from "aws-cdk-lib";
 import {GuPlayApp} from "@guardian/cdk";
-import {InstanceClass, InstanceSize, InstanceType, Peer, Port, Subnet, Vpc} from "aws-cdk-lib/aws-ec2";
+import {
+  InstanceClass,
+  InstanceSize,
+  InstanceType,
+  ISubnet,
+  Peer,
+  Port,
+  Subnet,
+  SubnetSelection,
+  Vpc
+} from "aws-cdk-lib/aws-ec2";
 import {AccessScope} from "@guardian/cdk/lib/constants";
-import {aws_ssm} from "aws-cdk-lib";
+import {aws_ssm, Fn} from "aws-cdk-lib";
 import {getHostName} from "./hostname";
 import {GuSecurityGroup} from "@guardian/cdk/lib/constructs/ec2";
+import {HttpGateway} from "./gateway";
 
 export class ConciergeGraphql extends GuStack {
   constructor(scope: App, id: string, props: GuStackProps) {
@@ -40,7 +51,7 @@ export class ConciergeGraphql extends GuStack {
 
     const hostedZoneId = aws_ssm.StringParameter.valueForStringParameter(this, `/account/services/capi.gutools/${this.stage}/hostedzoneid`);
 
-    const app = new GuPlayApp(this, {
+    const {loadBalancer, listener} = new GuPlayApp(this, {
       access: {
         //You should put a gateway in front of this
         scope: AccessScope.INTERNAL,
@@ -71,6 +82,25 @@ export class ConciergeGraphql extends GuStack {
         }
       },
       vpc,
+    });
+
+    const linkageSG = new GuSecurityGroup(this, "LinkageSG", {
+      app: props.app ?? "concierge-graphql",
+      vpc,
+    });
+
+    // const subnets:SubnetSelection = {
+    //   subnets:
+    // }
+    new HttpGateway(this, "GW", {
+      stage: props.stage as "CODE"|"PROD",
+      backendLoadbalancer: loadBalancer,
+      backendListener: listener,
+      backendLbIncomingSg: linkageSG,
+      subnets: {
+        subnets: this.subnetsFromTokenList(subnetsList.valueAsList, "DeploymentSubnet"), //subnetsList.valueAsList.map(sid=>Subnet.fromSubnetId(this, sid, sid)),
+      },
+      vpc
     });
 
     //OK - so this is a good idea and should really be in here. But it's damn fiddly so leaving it out for now.
@@ -119,5 +149,15 @@ export class ConciergeGraphql extends GuStack {
 
   getDeploymentSubnetsPath(scope:GuStack, isPreview:boolean) {
     return this.getAccountPath(scope, isPreview,"subnets")
+  }
+
+  subnetsFromTokenList(list:string[],paramName:string):ISubnet[] {
+    let result:ISubnet[]=[];
+
+    for(let i=0;i<list.length;i++) {
+      const subnetId = Fn.select(i, list);
+      result.push(Subnet.fromSubnetId(this, `${paramName}${i}`, subnetId))
+    }
+    return result;
   }
 }
