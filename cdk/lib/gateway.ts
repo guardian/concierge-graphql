@@ -14,6 +14,7 @@ interface HttpGatewayProps {
     backendLoadbalancer: IApplicationLoadBalancer;
     backendListener: IApplicationListener;
     backendLbIncomingSg: ISecurityGroup;
+    lbDomainName: string;
     subnets: SubnetSelection;
     vpc: IVpc;
 }
@@ -47,7 +48,7 @@ export class HttpGateway extends Construct {
             description: `Gateway for the ${props.stage} concierge-graphql${maybePreview} instance`,
             defaultIntegration: new HttpAlbIntegration('DefaultIntegration', props.backendListener, {
                 vpcLink,
-                secureServerName: props.backendLoadbalancer.loadBalancerDnsName,
+                secureServerName: props.lbDomainName,
             }),
             createDefaultStage: true,
         });

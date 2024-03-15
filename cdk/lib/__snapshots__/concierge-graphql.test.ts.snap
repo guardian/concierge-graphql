@@ -141,10 +141,10 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     "CertificateConciergegraphqlC301CD47": {
       "DeletionPolicy": "Retain",
       "Properties": {
-        "DomainName": "concierge-graphql-preview.content.code.dev-guardianapis.com",
+        "DomainName": "graphql-preview.internal.content.code.dev-guardianapis.com",
         "DomainValidationOptions": [
           {
-            "DomainName": "concierge-graphql-preview.content.code.dev-guardianapis.com",
+            "DomainName": "graphql-preview.internal.content.code.dev-guardianapis.com",
             "HostedZoneId": {
               "Ref": "SsmParameterValueaccountservicescapigutoolsTESThostedzoneidC96584B6F00A464EAD1953AFF4B05118Parameter",
             },
@@ -258,12 +258,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         },
         "PayloadFormatVersion": "1.0",
         "TlsConfig": {
-          "ServerNameToVerify": {
-            "Fn::GetAtt": [
-              "LoadBalancerConciergegraphql238A0C8B",
-              "DNSName",
-            ],
-          },
+          "ServerNameToVerify": "graphql-preview.internal.content.code.dev-guardianapis.com",
         },
       },
       "Type": "AWS::ApiGatewayV2::Integration",

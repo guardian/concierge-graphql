@@ -41,6 +41,7 @@ export class ConciergeGraphql extends GuStack {
 
     const hostedZoneId = aws_ssm.StringParameter.valueForStringParameter(this, `/account/services/capi.gutools/${this.stage}/hostedzoneid`);
 
+    const lbDomainName = getHostName(this, ".internal");
     const {loadBalancer, listener} = new GuPlayApp(this, {
       access: {
         //You should put a gateway in front of this
@@ -50,7 +51,7 @@ export class ConciergeGraphql extends GuStack {
       app: "concierge-graphql",
       certificateProps: {
         hostedZoneId,
-        domainName: getHostName(this),
+        domainName: lbDomainName,
       },
       instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.LARGE),
       monitoringConfiguration: {
@@ -85,6 +86,7 @@ export class ConciergeGraphql extends GuStack {
     new HttpGateway(this, "GW", {
       stage: props.stage as "CODE"|"PROD",
       backendLoadbalancer: loadBalancer,
+      lbDomainName,
       previewMode,
       backendListener: listener,
       backendLbIncomingSg: linkageSG,
