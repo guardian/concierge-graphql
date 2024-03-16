@@ -78,6 +78,7 @@ class ApiKeyAuth(dynamoDbClient:DynamoDbClient, tableName:String, cachingTtl:Fin
    * @return
    */
   private def lookUpKey(keyValue:String):Option[String] = {
+    logger.debug(s"lookUpKey value is $keyValue")
     try {
       val response = dynamoDbClient.getItem(GetItemRequest.builder()
         .tableName(tableName)
