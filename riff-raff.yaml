@@ -43,4 +43,5 @@ deployments:
 #      - content-api-preview
     parameters:
       bucketSsmLookup: true
-    dependencies: [ cloudformation, cloudformation-preview ]
+    dependencies: [ cloudformation ]
+#    dependencies: [ cloudformation, cloudformation-preview ]
