@@ -28,7 +28,9 @@ object Main extends IOApp {
     case OPTIONS -> Root / "query" =>
       IO(Response(
         Status.Ok,
-        headers=Headers("Access-Control-Allow-Origin" -> "*", "Access-Control-Allow-Methods"->"POST, GET, OPTIONS", "Access-Control-Allow-Headers" -> s"Content-Type, ${ApiKeyAuth.name.toString}")
+        headers=Headers("Access-Control-Allow-Origin" -> "http://localhost:8081",
+          "Access-Control-Allow-Methods"->"POST, GET, OPTIONS",
+          "Access-Control-Allow-Headers" -> s"Content-Type, ${ApiKeyAuth.name.toString}")
       ))
     case req @ POST -> Root / "query" =>
       security.limitByTier(req, DeveloperTier) { tier=>

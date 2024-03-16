@@ -39,7 +39,6 @@ class ApiKeyAuth(dynamoDbClient:DynamoDbClient, tableName:String, cachingTtl:Fin
 
   timer.schedule(new TimerTask {
     override def run(): Unit = {
-      logger.debug("Cleanup timer running")
       val cutoff = Instant.now().minus(cachingTtl.length, cachingTtl.unit.toChronoUnit)
       this.synchronized {
         cacheTracking = cacheTracking.filter(e=>e.time.isAfter(cutoff))
@@ -78,7 +77,6 @@ class ApiKeyAuth(dynamoDbClient:DynamoDbClient, tableName:String, cachingTtl:Fin
    * @return
    */
   private def lookUpKey(keyValue:String):Option[String] = {
-    logger.debug(s"lookUpKey value is $keyValue")
     try {
       val response = dynamoDbClient.getItem(GetItemRequest.builder()
         .tableName(tableName)

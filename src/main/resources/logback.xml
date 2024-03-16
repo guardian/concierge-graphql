@@ -14,7 +14,7 @@
 
     <logger name="datastore" level="debug"/>
     <logger name="anotherschema" level="debug"/>
-    <logger name="security" level="debug"/>
+    <logger name="security" level="info"/>
 
     <root level="INFO">
         <appender-ref ref="json-encoded"/>
