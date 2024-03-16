@@ -19,7 +19,7 @@ object Main extends IOApp {
   val config = fetchConfig().get  //it's OK to throw exception here, that will then block startup
 
   DefaultExports.initialize()
-  val documentRepo = new ElasticsearchRepo(ElasticSearchResolver.resolve())
+  val documentRepo = new ElasticsearchRepo(ElasticSearchResolver.resolve(config))
   val server = new GraphQLServer(documentRepo)
 
   private val security = Security(config)
