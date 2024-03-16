@@ -6,6 +6,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     "gu:cdk:constructs": [
       "GuParameter",
       "GuParameter",
+      "GuPolicy",
       "GuPlayApp",
       "GuCertificate",
       "GuInstanceRole",
@@ -71,6 +72,94 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     },
   },
   "Resources": {
+    "AuthTable0711E62F": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "ApiKey",
+            "AttributeType": "S",
+          },
+          {
+            "AttributeName": "Timestamp",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "ApiKey",
+            "KeyType": "HASH",
+          },
+          {
+            "AttributeName": "Timestamp",
+            "KeyType": "RANGE",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/concierge-graphql",
+          },
+          {
+            "Key": "Stack",
+            "Value": "content-api",
+          },
+          {
+            "Key": "Stage",
+            "Value": "TEST",
+          },
+        ],
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "AuthTableParam9777C3B3": {
+      "Properties": {
+        "Name": "/TEST/content-api/concierge-graphql/aws/auth_table",
+        "Tags": {
+          "Stack": "content-api",
+          "Stage": "TEST",
+          "gu:cdk:version": "TEST",
+          "gu:repo": "guardian/concierge-graphql",
+        },
+        "Type": "String",
+        "Value": {
+          "Ref": "AuthTable0711E62F",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "AuthTablePolicy5F6B0D1E": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:GetItem",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "AuthTable0711E62F",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "AuthTablePolicy5F6B0D1E",
+        "Roles": [
+          {
+            "Ref": "InstanceRoleConciergegraphql96280BE9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "AutoScalingGroupConciergegraphqlASG7A20D011": {
       "Properties": {
         "HealthCheckGracePeriod": 120,

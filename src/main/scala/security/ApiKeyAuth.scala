@@ -29,6 +29,8 @@ object CacheTrackingEntry {
 
 class ApiKeyAuth(dynamoDbClient:DynamoDbClient, tableName:String, cachingTtl:FiniteDuration) {
   private val logger = LoggerFactory.getLogger(getClass)
+  logger.info(s"AWS dynamodb auth initialised.  TableName is $tableName")
+
   private var localCache:Map[String,UserTier] = Map()
 
   private var cacheTracking:SortedSet[CacheTrackingEntry] = SortedSet()(CacheTrackingEntry.ordering)
