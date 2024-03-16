@@ -3,7 +3,7 @@ import {GuParameter, GuStack} from "@guardian/cdk/lib/constructs/core";
 import type {App} from "aws-cdk-lib";
 import {aws_ssm} from "aws-cdk-lib";
 import {GuPlayApp} from "@guardian/cdk";
-import {InstanceClass, InstanceSize, InstanceType, Peer, Subnet, Vpc} from "aws-cdk-lib/aws-ec2";
+import {InstanceClass, InstanceSize, InstanceType, Peer, Port, Subnet, Vpc} from "aws-cdk-lib/aws-ec2";
 import {AccessScope} from "@guardian/cdk/lib/constants";
 import {getHostName} from "./hostname";
 import {GuSecurityGroup, GuVpc} from "@guardian/cdk/lib/constructs/ec2";
@@ -60,7 +60,7 @@ export class ConciergeGraphql extends GuStack {
       stringValue: authTable.tableName
     });
 
-    const {loadBalancer, listener} = new GuPlayApp(this, {
+    const {loadBalancer, listener, autoScalingGroup} = new GuPlayApp(this, {
       access: {
         //You should put a gateway in front of this
         scope: AccessScope.INTERNAL,
@@ -125,6 +125,8 @@ export class ConciergeGraphql extends GuStack {
       vpc
     });
 
+    autoScalingGroup.connections.allowTo(Peer.ipv4("10.0.0.0/8"), Port.tcp(9200), "Allow outgoing connections to Elasticsearch");
+
     //OK - so this is a good idea and should really be in here. But it's damn fiddly so leaving it out for now.
     //The idea is we need a connection to the relevant Elasticsearch instance. So, we define a "connection" (which basically
     //to an egress rule) on our SG which allows egress to the remote ES SG. You still manually need to add a rule on the relevant
@@ -159,9 +161,9 @@ export class ConciergeGraphql extends GuStack {
   getAccountPath(scope:GuStack, isPreview:boolean, elementName: string) {
     const basePath = "/account/vpc";
     if(isPreview) {
-      return scope.stage=="CODE" ? `${basePath}/CODE-preview/${elementName}` : `${basePath}/PROD-preview/${elementName}`;
+      return scope.stage.startsWith("CODE") ? `${basePath}/CODE-preview/${elementName}` : `${basePath}/PROD-preview/${elementName}`;
     } else {
-      return scope.stage=="CODE" ? `${basePath}/CODE-live/${elementName}` : `${basePath}/PROD-live/${elementName}`;
+      return scope.stage.startsWith("CODE") ? `${basePath}/CODE-live/${elementName}` : `${basePath}/PROD-live/${elementName}`;
     }
   }
 

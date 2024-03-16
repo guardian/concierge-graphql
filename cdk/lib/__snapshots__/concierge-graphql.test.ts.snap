@@ -426,6 +426,13 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
             "IpProtocol": "tcp",
             "ToPort": 443,
           },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "Allow outgoing connections to Elasticsearch",
+            "FromPort": 9200,
+            "IpProtocol": "tcp",
+            "ToPort": 9200,
+          },
         ],
         "Tags": [
           {
@@ -1090,6 +1097,13 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
             "FromPort": 1515,
             "IpProtocol": "tcp",
             "ToPort": 1515,
+          },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "Allow outgoing connections to Elasticsearch",
+            "FromPort": 9200,
+            "IpProtocol": "tcp",
+            "ToPort": 9200,
           },
         ],
         "Tags": [
