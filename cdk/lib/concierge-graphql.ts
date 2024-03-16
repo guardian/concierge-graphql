@@ -6,8 +6,12 @@ import {GuPlayApp} from "@guardian/cdk";
 import {InstanceClass, InstanceSize, InstanceType, Peer, Subnet, Vpc} from "aws-cdk-lib/aws-ec2";
 import {AccessScope} from "@guardian/cdk/lib/constants";
 import {getHostName} from "./hostname";
-import {GuSecurityGroup, GuVpc, SubnetType} from "@guardian/cdk/lib/constructs/ec2";
+import {GuSecurityGroup, GuVpc} from "@guardian/cdk/lib/constructs/ec2";
 import {HttpGateway} from "./gateway";
+import {AttributeType, BillingMode, Table} from "aws-cdk-lib/aws-dynamodb";
+import {GuPolicy} from "@guardian/cdk/lib/constructs/iam";
+import {Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
+import {StringParameter} from "aws-cdk-lib/aws-ssm";
 
 export class ConciergeGraphql extends GuStack {
   constructor(scope: App, id: string, props: GuStackProps) {
@@ -42,6 +46,24 @@ export class ConciergeGraphql extends GuStack {
     const hostedZoneId = aws_ssm.StringParameter.valueForStringParameter(this, `/account/services/capi.gutools/${this.stage}/hostedzoneid`);
 
     const lbDomainName = getHostName(this, ".internal");
+
+    const authTable = new Table(this, "AuthTable", {
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      partitionKey: {
+        name: "ApiKey",
+        type: AttributeType.STRING
+      },
+      sortKey: {
+        name: "Timestamp",
+        type: AttributeType.STRING
+      }
+    });
+
+    new StringParameter(this, "AuthTableParam", {
+      parameterName: `/${this.stage}/${this.stack}/concierge-graphql/aws/auth_table`,
+      stringValue: authTable.tableName
+    });
+
     const {loadBalancer, listener} = new GuPlayApp(this, {
       access: {
         //You should put a gateway in front of this
@@ -71,6 +93,17 @@ export class ConciergeGraphql extends GuStack {
           fileName: "concierge-graphql_0.1.0_all.deb",
           executionStatement: "dpkg -i concierge-graphql/concierge-graphql_0.1.0_all.deb"
         }
+      },
+      roleConfiguration: {
+        additionalPolicies: [
+            new GuPolicy(this, "AuthTablePolicy", {
+              statements: [ new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions: ["dynamodb:GetItem"],
+                resources: [authTable.tableArn]
+              })]
+            })
+        ]
       },
       vpc,
     });

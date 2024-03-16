@@ -71,8 +71,8 @@ lazy val root = (project in file("."))
       "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test",
 
       // AWS auth
-      "software.amazon.awssdk" % "dynamodb" % "2.25.10"
-
+      "software.amazon.awssdk" % "dynamodb" % "2.25.10",
+      "com.gu" %% "simple-configuration-ssm" % "1.7.0",
 ),
     dependencyOverrides ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.5",  //required for json logging encoder

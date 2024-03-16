@@ -7,7 +7,7 @@ import org.typelevel.ci.CIString
 import software.amazon.awssdk.auth.credentials.{AwsCredentialsProviderChain, EnvironmentVariableCredentialsProvider, InstanceProfileCredentialsProvider, ProfileCredentialsProvider, SystemPropertyCredentialsProvider}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.{AttributeValue, GetItemRequest}
-
+import utils.AWSUtils
 import java.time.{Duration, Instant}
 import java.util.{Timer, TimerTask}
 import scala.collection.SortedSet
@@ -98,21 +98,10 @@ class ApiKeyAuth(dynamoDbClient:DynamoDbClient, tableName:String, cachingTtl:Fin
 }
 
 object ApiKeyAuth {
-  private val name = CIString("X-Api-Key")
-  def apply(cachingTtl:FiniteDuration) = {
-    Option(System.getProperty("AUTH_TABLE")) match {
-      case Some(authTable) =>
-        val credsProvider = AwsCredentialsProviderChain.builder().credentialsProviders(
-          InstanceProfileCredentialsProvider.create(),
-          ProfileCredentialsProvider.create("capi"),
-          SystemPropertyCredentialsProvider.create(),
-          EnvironmentVariableCredentialsProvider.create()
-        ).build()
+  val name = CIString("X-Api-Key")
 
-        val ddbClient = DynamoDbClient.builder().credentialsProvider(credsProvider).build()
-        new ApiKeyAuth(ddbClient, authTable, cachingTtl)
-      case None =>
-        throw new RuntimeException("You need to define the system property AUTH_TABLE in order to get authentication to work")
-    }
+  def apply(cachingTtl: FiniteDuration, authTable: String): ApiKeyAuth = {
+    val ddbClient = DynamoDbClient.builder().credentialsProvider(AWSUtils.credsProvider).build()
+    new ApiKeyAuth(ddbClient, authTable, cachingTtl)
   }
 }
