@@ -52,10 +52,6 @@ export class ConciergeGraphql extends GuStack {
       partitionKey: {
         name: "ApiKey",
         type: AttributeType.STRING
-      },
-      sortKey: {
-        name: "Timestamp",
-        type: AttributeType.STRING
       }
     });
 
