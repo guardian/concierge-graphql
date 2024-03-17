@@ -21,19 +21,54 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: corretto
+          java-version: 11
+          cache: sbt
+
+      - name: Build and test
+        env:
+          SBT_JUNIT_OUTPUT: ./junit-tests
+          JAVA_OPTS: -Dsbt.log.noformat=true
+        run: |
+          sbt 'test;debian:packageBin'
+
+      - name: Store the built artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-deb
+          path: target/concierge-graphql_0.1.0_all.deb
+          retention-days: 5
+          compression-level: 0    #artifact is already compressed
+
+  riffraff-upload:
+    runs-on: ubuntu-latest
+
+    needs:
+      - concierge-graphql-gnm
+      - graphiql-explorer
+
+    # The first two permissions are needed to interact with GitHub's OIDC Token endpoint.
+    # The second set of three permissions are needed to write test results back to GH
+    permissions:
+      id-token: write
+      contents: read
+      issues: read
+      checks: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
       - uses: actions/setup-node@v3
         with:
           node-version: 20.x
           cache: 'yarn'
           cache-dependency-path: cdk/yarn.lock
-
-#      - run: yarn install --frozen-lockfile
-#        name: Prepare to build explorer
-#        working-directory: explorer
-#
-#      - run: yarn build
-#        name: Build explorer
-#        working-directory: explorer
 
       - run: yarn install --frozen-lockfile
         name: Prepare for CDK infrastructure build
@@ -45,26 +80,6 @@ jobs:
         name: Build infrastructure definition from CDK
         working-directory: cdk
 
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: corretto
-          java-version: 11
-          cache: sbt
-
-#      - name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@v1
-#        with:
-#          aws-region: eu-west-1
-#          role-to-assume: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
-#          role-session-name: content-api-concierge-graphql-build
-
-      - name: Build and test
-        env:
-          SBT_JUNIT_OUTPUT: ./junit-tests
-          JAVA_OPTS: -Dsbt.log.noformat=true
-        run: |
-          sbt 'test;debian:packageBin'
       - uses: guardian/actions-riff-raff@v4
         with:
           roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
@@ -73,7 +88,9 @@ jobs:
           projectName: Content Platforms::concierge-graphql-experimental
           contentDirectories: |
             concierge-graphql:
-              - target/concierge-graphql_0.1.0_all.deb
+              - artifacts/backend-deb/concierge-graphql_0.1.0_all.deb
+            graphiql-explorer:
+              - artifacts/explorer/build
             cloudformation:
               - cdk/cdk.out/ConciergeGraphql-PROD-AARDVARK.template.json
               - cdk/cdk.out/ConciergeGraphql-CODE-AARDVARK.template.json

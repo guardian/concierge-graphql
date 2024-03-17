@@ -45,7 +45,15 @@ jobs:
         name: Build explorer
         working-directory: explorer
 
-      - name: Build and push
+      - name: Store the built artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: explorer
+          path: explorer/build
+          retention-days: 5
+          compression-level: 5
+
+      - name: Build and push container
         uses: docker/build-push-action@v5
         with:
           push: true

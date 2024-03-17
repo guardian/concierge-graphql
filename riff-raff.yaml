@@ -45,3 +45,18 @@ deployments:
       bucketSsmLookup: true
     dependencies: [ cloudformation ]
 #    dependencies: [ cloudformation, cloudformation-preview ]
+
+  graphiql-explorer:
+    type: aws-s3
+    stacks:
+      - content-api #we don't need multiple stacks here
+    parameters:
+      bucketSsmKey: /account/services/static.serving.bucket
+      cacheControl:
+        - pattern: ".*.html$"
+          value: "public, max-age=60"
+        - pattern: ".*"
+          value: "public, max-age=3600"
+      publicReadAcl: true
+      prefixStack: false
+    dependencies: ["cloudformation"]
