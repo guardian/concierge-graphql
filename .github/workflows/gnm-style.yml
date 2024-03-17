@@ -19,7 +19,7 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Setup JDK
         uses: actions/setup-java@v3
@@ -57,7 +57,7 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -135,6 +135,7 @@ jobs:
         name: Build infrastructure definition from CDK
         working-directory: cdk
 
+      - run: ls -lh artifacts
       - uses: guardian/actions-riff-raff@v4
         with:
           roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
@@ -145,7 +146,7 @@ jobs:
             concierge-graphql:
               - artifacts/backend-deb/concierge-graphql_0.1.0_all.deb
             graphiql-explorer:
-              - artifacts/explorer/build
+              - artifacts/explorer
             cloudformation:
               - cdk/cdk.out/ConciergeGraphql-PROD-AARDVARK.template.json
               - cdk/cdk.out/ConciergeGraphql-CODE-AARDVARK.template.json
