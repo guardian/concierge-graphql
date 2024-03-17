@@ -43,6 +43,39 @@ jobs:
           retention-days: 5
           compression-level: 0    #artifact is already compressed
 
+  cdk-build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'yarn'
+          cache-dependency-path: cdk/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        name: Prepare for CDK infrastructure build
+        working-directory: cdk
+      - run: yarn test
+        name: Test CDK infrastructure integrity
+        working-directory: cdk
+      - run: yarn synth
+        name: Build infrastructure definition from CDK
+        working-directory: cdk
+
+      - name: Store the built artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cdk.out
+          path: cdk/cdk.out
+          retention-days: 5
+          compression-level: 5
+
   graphiql-explorer:
     runs-on: ubuntu-latest
 
@@ -59,16 +92,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 18.x
           cache: 'yarn'
@@ -90,6 +114,15 @@ jobs:
           retention-days: 5
           compression-level: 5
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push container
         uses: docker/build-push-action@v5
         with:
@@ -104,6 +137,7 @@ jobs:
     needs:
       - concierge-graphql-gnm
       - graphiql-explorer
+      - cdk-build
 
     # The first two permissions are needed to interact with GitHub's OIDC Token endpoint.
     # The second set of three permissions are needed to write test results back to GH
@@ -119,23 +153,7 @@ jobs:
         with:
           path: artifacts
 
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20.x
-          cache: 'yarn'
-          cache-dependency-path: cdk/yarn.lock
-
-      - run: yarn install --frozen-lockfile
-        name: Prepare for CDK infrastructure build
-        working-directory: cdk
-      - run: yarn test
-        name: Test CDK infrastructure integrity
-        working-directory: cdk
-      - run: yarn synth
-        name: Build infrastructure definition from CDK
-        working-directory: cdk
-
-      - run: ls -lh artifacts
+      - run: ls -lh artifacts/*
       - uses: guardian/actions-riff-raff@v4
         with:
           roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
@@ -148,11 +166,11 @@ jobs:
             graphiql-explorer:
               - artifacts/explorer
             cloudformation:
-              - cdk/cdk.out/ConciergeGraphql-PROD-AARDVARK.template.json
-              - cdk/cdk.out/ConciergeGraphql-CODE-AARDVARK.template.json
+              - artifacts/cdk.out/ConciergeGraphql-PROD-AARDVARK.template.json
+              - artifacts/cdk.out/ConciergeGraphql-CODE-AARDVARK.template.json
             cloudformation-preview:
-              - cdk/cdk.out/ConciergeGraphql-preview-PROD-AARDVARK.template.json
-              - cdk/cdk.out/ConciergeGraphql-preview-CODE-AARDVARK.template.json
+              - artifacts/cdk.out/ConciergeGraphql-preview-PROD-AARDVARK.template.json
+              - artifacts/cdk.out/ConciergeGraphql-preview-CODE-AARDVARK.template.json
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()  #runs even if there is a test failure
