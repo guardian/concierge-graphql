@@ -43,6 +43,61 @@ jobs:
           retention-days: 5
           compression-level: 0    #artifact is already compressed
 
+  graphiql-explorer:
+    runs-on: ubuntu-latest
+
+    # The first two permissions are needed to interact with GitHub's OIDC Token endpoint.
+    # The second set of three permissions are needed to write test results back to GH
+    permissions:
+      id-token: write
+      contents: read
+      issues: read
+      checks: write
+      packages: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'yarn'
+          cache-dependency-path: explorer/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        name: Prepare to build explorer
+        working-directory: explorer
+
+      - run: yarn build
+        name: Build explorer
+        working-directory: explorer
+
+      - name: Store the built artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: explorer
+          path: explorer/build
+          retention-days: 5
+          compression-level: 5
+
+      - name: Build and push container
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          platforms: linux/amd64,linux/arm64
+          context: explorer
+          tags: ghcr.io/guardian/concierge-graphql/graphiql-explorer:${{ github.run_number }}
+
   riffraff-upload:
     runs-on: ubuntu-latest
 
