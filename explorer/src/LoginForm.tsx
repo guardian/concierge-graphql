@@ -3,7 +3,8 @@ import {GraphiQL} from "graphiql";
 import { createGraphiQLFetcher, Fetcher } from '@graphiql/toolkit';
 import {css} from "@emotion/react";
 import 'graphiql/graphiql.css';
-import {Button, TextInput} from "@guardian/source-react-components";
+import {Accordion, AccordionRow,Button, TextInput} from "@guardian/source-react-components";
+import {info} from "sass";
 
 const loginContainer = css`
     margin: auto;
@@ -29,6 +30,15 @@ const buttonContainer = css`
     justify-content: space-evenly;
 `;
 
+const infoArea = css`
+    margin-top: 2em;
+`;
+
+const accordionContent = css`
+    width: 40%;
+    margin-left: auto;
+    margin-right: auto;
+`;
 export const LoginForm:React.FC = () => {
     const defaultBaseUrl = localStorage.getItem("CapiGQLBase") ?? "https://";
     const defaultApiKey = localStorage.getItem("CapiGQLKey") ?? "";
@@ -85,19 +95,46 @@ export const LoginForm:React.FC = () => {
                        onChange={(evt)=>setApiKey(evt.target.value)}
                        />
             </div>
-                <div css={buttonContainer}>
-                    <div>
-                    <Button disabled={!urlIsValid || apiKey==""}
-                            onClick={()=>setReadyToGo(true)}>
-                        Connect
-                    </Button>
-                    </div>
-                    <div>
-                    <Button disabled={!haveCachedLogin}
-                            priority="secondary"
-                            onClick={clearCache}>
-                        Clear</Button>
-                    </div>
+            <div css={buttonContainer}>
+                <div>
+                <Button disabled={!urlIsValid || apiKey==""}
+                        onClick={()=>setReadyToGo(true)}>
+                    Connect
+                </Button>
                 </div>
+                <div>
+                <Button disabled={!haveCachedLogin}
+                        priority="secondary"
+                        onClick={clearCache}>
+                    Clear</Button>
+                </div>
+            </div>
+                <Accordion hideToggleLabel={false} cssOverrides={infoArea}>
+                    <AccordionRow label="What's this all about?">
+                        <div css={accordionContent}>
+                            <p>We are experimenting with using GraphQL to query our content and possibly other things</p>
+                            <p>This user interface will let you into the GraphiQL editor to explore the data currently available
+                                (see <a href="https://github.com/graphql/graphiql/blob/main/packages/graphiql/README.md">https://github.com/graphql/graphiql/blob/main/packages/graphiql/README.md</a>
+                                &nbsp;for more information on the GraphiQL user interface)
+                            </p>
+                            <p>
+                                At present, it's only possible to query the development/staging environment.
+                            </p>
+                            <p>
+                                You need to be issued with an API key in order to be allowed access to this system - <i>this is not the same</i>
+                                &nbsp;as a standard CAPI API key.
+                            </p>
+                        </div>
+                    </AccordionRow>
+                    <AccordionRow label="How do I know what URL to use and get hold of an API key?">
+                        <div css={accordionContent}>
+                            <p>
+                                You must contact the team directly. At present, that means talking to Andy Gallagher
+                                and/or
+                                Jon Herbert in the Content Pipeline team.
+                            </p>
+                        </div>
+                    </AccordionRow>
+                </Accordion>
         </div>
 }
