@@ -12,6 +12,7 @@ import {AttributeType, BillingMode, Table} from "aws-cdk-lib/aws-dynamodb";
 import {GuPolicy} from "@guardian/cdk/lib/constructs/iam";
 import {Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {StringParameter} from "aws-cdk-lib/aws-ssm";
+import {GraphiqlExplorer} from "./graphiql-explorer";
 
 export class ConciergeGraphql extends GuStack {
   constructor(scope: App, id: string, props: GuStackProps) {
@@ -127,6 +128,9 @@ export class ConciergeGraphql extends GuStack {
 
     autoScalingGroup.connections.allowTo(Peer.ipv4("10.0.0.0/8"), Port.tcp(9200), "Allow outgoing connections to Elasticsearch");
 
+    new GraphiqlExplorer(this, "Explorer", {
+      appName: "graphiql-explorer"  //needs to match the value in riff-raff.yaml
+    })
     //OK - so this is a good idea and should really be in here. But it's damn fiddly so leaving it out for now.
     //The idea is we need a connection to the relevant Elasticsearch instance. So, we define a "connection" (which basically
     //to an egress rule) on our SG which allows egress to the remote ES SG. You still manually need to add a rule on the relevant
