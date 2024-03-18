@@ -7,7 +7,7 @@ import {InstanceClass, InstanceSize, InstanceType, Peer, Port, Subnet, Vpc} from
 import {AccessScope} from "@guardian/cdk/lib/constants";
 import {getHostName} from "./hostname";
 import {GuSecurityGroup, GuVpc} from "@guardian/cdk/lib/constructs/ec2";
-import {HttpGateway} from "./gateway";
+import {HttpGateway, ValidStages} from "./gateway";
 import {AttributeType, BillingMode, Table} from "aws-cdk-lib/aws-dynamodb";
 import {GuPolicy} from "@guardian/cdk/lib/constructs/iam";
 import {Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
@@ -114,7 +114,7 @@ export class ConciergeGraphql extends GuStack {
     const subnets = GuVpc.subnets(this, subnetsList.valueAsList);
 
     new HttpGateway(this, "GW", {
-      stage: props.stage as "CODE"|"PROD",
+      stage: props.stage as ValidStages,
       backendLoadbalancer: loadBalancer,
       lbDomainName,
       previewMode,

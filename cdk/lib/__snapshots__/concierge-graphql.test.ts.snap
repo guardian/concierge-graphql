@@ -310,6 +310,23 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     },
     "GWApiGW36D3A369": {
       "Properties": {
+        "CorsConfiguration": {
+          "AllowCredentials": true,
+          "AllowHeaders": [
+            "content-type",
+            "x-api-key",
+          ],
+          "AllowMethods": [
+            "POST",
+            "GET",
+            "OPTIONS",
+          ],
+          "AllowOrigins": [
+            "http://localhost:8081",
+            "graphiql.capi.test.dev-gutools.co.uk",
+          ],
+          "MaxAge": 300,
+        },
         "Description": "Gateway for the TEST concierge-graphql instance",
         "Name": "concierge-graphql-TEST",
         "ProtocolType": "HTTP",
