@@ -56,7 +56,7 @@ export class HttpGateway extends Construct {
                 secureServerName: props.lbDomainName,
             }),
             corsPreflight: {
-                allowOrigins: ['http://localhost:8081', deployedUrl],
+                allowOrigins: ['http://localhost:8081', `https://${deployedUrl}`],
                 allowMethods: [CorsHttpMethod.POST, CorsHttpMethod.GET, CorsHttpMethod.OPTIONS],
                 allowHeaders: ['content-type', 'x-api-key'],
                 maxAge: Duration.minutes(5),

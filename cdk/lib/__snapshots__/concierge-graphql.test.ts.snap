@@ -323,7 +323,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
           ],
           "AllowOrigins": [
             "http://localhost:8081",
-            "graphiql.capi.test.dev-gutools.co.uk",
+            "https://graphiql.capi.test.dev-gutools.co.uk",
           ],
           "MaxAge": 300,
         },
