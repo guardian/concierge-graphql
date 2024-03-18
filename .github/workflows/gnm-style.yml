@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 11
@@ -138,7 +138,6 @@ jobs:
       - concierge-graphql-gnm
       - graphiql-explorer
       - cdk-build
-
     # The first two permissions are needed to interact with GitHub's OIDC Token endpoint.
     # The second set of three permissions are needed to write test results back to GH
     permissions:
@@ -146,6 +145,7 @@ jobs:
       contents: read
       issues: read
       checks: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
