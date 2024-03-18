@@ -2,7 +2,7 @@ name: Build and upload
 
 on:
   push:
-    branches: ["*"]
+    branches: ["**"]
   workflow_dispatch: {}
 
 jobs:
@@ -19,21 +19,44 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: corretto
+          java-version: 11
+          cache: sbt
+
+      - name: Build and test
+        env:
+          SBT_JUNIT_OUTPUT: ./junit-tests
+          JAVA_OPTS: -Dsbt.log.noformat=true
+        run: |
+          sbt 'test;debian:packageBin'
+
+      - name: Store the built artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-deb
+          path: target/concierge-graphql_0.1.0_all.deb
+          retention-days: 5
+          compression-level: 0    #artifact is already compressed
+
+  cdk-build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20.x
           cache: 'yarn'
           cache-dependency-path: cdk/yarn.lock
-
-#      - run: yarn install --frozen-lockfile
-#        name: Prepare to build explorer
-#        working-directory: explorer
-#
-#      - run: yarn build
-#        name: Build explorer
-#        working-directory: explorer
 
       - run: yarn install --frozen-lockfile
         name: Prepare for CDK infrastructure build
@@ -45,39 +68,109 @@ jobs:
         name: Build infrastructure definition from CDK
         working-directory: cdk
 
-      - name: Setup JDK
-        uses: actions/setup-java@v3
+      - name: Store the built artifacts
+        uses: actions/upload-artifact@v4
         with:
-          distribution: corretto
-          java-version: 11
-          cache: sbt
+          name: cdk.out
+          path: cdk/cdk.out
+          retention-days: 5
+          compression-level: 5
 
-#      - name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@v1
-#        with:
-#          aws-region: eu-west-1
-#          role-to-assume: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
-#          role-session-name: content-api-concierge-graphql-build
+  graphiql-explorer:
+    runs-on: ubuntu-latest
 
-      - name: Build and test
-        env:
-          SBT_JUNIT_OUTPUT: ./junit-tests
-          JAVA_OPTS: -Dsbt.log.noformat=true
-        run: |
-          sbt 'test;debian:packageBin'
+    # The first two permissions are needed to interact with GitHub's OIDC Token endpoint.
+    # The second set of three permissions are needed to write test results back to GH
+    permissions:
+      id-token: write
+      contents: read
+      issues: read
+      checks: write
+      packages: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'yarn'
+          cache-dependency-path: explorer/yarn.lock
+
+      - run: yarn install --frozen-lockfile
+        name: Prepare to build explorer
+        working-directory: explorer
+
+      - run: yarn build
+        name: Build explorer
+        working-directory: explorer
+
+      - name: Store the built artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: explorer
+          path: explorer/build
+          retention-days: 5
+          compression-level: 5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          platforms: linux/amd64,linux/arm64
+          context: explorer
+          tags: ghcr.io/guardian/concierge-graphql/graphiql-explorer:${{ github.run_number }}
+
+  riffraff-upload:
+    runs-on: ubuntu-latest
+
+    needs:
+      - concierge-graphql-gnm
+      - graphiql-explorer
+      - cdk-build
+    # The first two permissions are needed to interact with GitHub's OIDC Token endpoint.
+    # The second set of three permissions are needed to write test results back to GH
+    permissions:
+      id-token: write
+      contents: read
+      issues: read
+      checks: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - run: ls -lh artifacts/*
       - uses: guardian/actions-riff-raff@v4
         with:
+          roleArn: ${{ secrets.GU_RIFF_RAFF_ROLE_ARN }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
           configPath: ./riff-raff.yaml
           projectName: Content Platforms::concierge-graphql-experimental
           contentDirectories: |
             concierge-graphql:
-              - target/concierge-graphql_0.1.0_all.deb
+              - artifacts/backend-deb/concierge-graphql_0.1.0_all.deb
+            graphiql-explorer:
+              - artifacts/explorer
             cloudformation:
-              - cdk/cdk.out/ConciergeGraphql-PROD-AARDVARK.template.json
-              - cdk/cdk.out/ConciergeGraphql-CODE-AARDVARK.template.json
+              - artifacts/cdk.out/ConciergeGraphql-PROD-AARDVARK.template.json
+              - artifacts/cdk.out/ConciergeGraphql-CODE-AARDVARK.template.json
             cloudformation-preview:
-              - cdk/cdk.out/ConciergeGraphql-preview-PROD-AARDVARK.template.json
-              - cdk/cdk.out/ConciergeGraphql-preview-CODE-AARDVARK.template.json
+              - artifacts/cdk.out/ConciergeGraphql-preview-PROD-AARDVARK.template.json
+              - artifacts/cdk.out/ConciergeGraphql-preview-CODE-AARDVARK.template.json
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()  #runs even if there is a test failure

@@ -6,6 +6,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     "gu:cdk:constructs": [
       "GuParameter",
       "GuParameter",
+      "GuPolicy",
       "GuPlayApp",
       "GuCertificate",
       "GuInstanceRole",
@@ -26,10 +27,20 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "GuSecurityGroup",
       "GuSecurityGroup",
       "GuSecurityGroup",
+      "GuStringParameter",
+      "GuStringParameter",
     ],
     "gu:cdk:version": "TEST",
   },
   "Outputs": {
+    "ExplorerDistroUrlOut91AD6AD6": {
+      "Value": {
+        "Fn::GetAtt": [
+          "GraphiQLDistroDDB6F81C",
+          "DomainName",
+        ],
+      },
+    },
     "LoadBalancerConciergegraphqlDnsName": {
       "Description": "DNS entry for LoadBalancerConciergegraphql",
       "Value": {
@@ -50,6 +61,11 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "Description": "SSM parameter containing the S3 bucket name holding distribution artifacts",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
+    "ExplorerCertArn": {
+      "Default": "/TEST/content-api/graphiql-explorer/GlobalCertArn",
+      "Description": "Cert to use for graphiql TEST. This must reside in us-east-1",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
     "LoggingStreamName": {
       "Default": "/account/services/logging.stream.name",
       "Description": "SSM parameter containing the Name (not ARN) on the kinesis stream",
@@ -57,6 +73,11 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     },
     "SsmParameterValueaccountservicescapigutoolsTESThostedzoneidC96584B6F00A464EAD1953AFF4B05118Parameter": {
       "Default": "/account/services/capi.gutools/TEST/hostedzoneid",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "StaticBucketName": {
+      "Default": "/account/services/static.serving.bucket",
+      "Description": "SSM parameter giving the name of a bucket which is to be used for static hosting",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
     "subnets": {
@@ -71,6 +92,86 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     },
   },
   "Resources": {
+    "AuthTable0711E62F": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "ApiKey",
+            "AttributeType": "S",
+          },
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "ApiKey",
+            "KeyType": "HASH",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/concierge-graphql",
+          },
+          {
+            "Key": "Stack",
+            "Value": "content-api",
+          },
+          {
+            "Key": "Stage",
+            "Value": "TEST",
+          },
+        ],
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "AuthTableParam9777C3B3": {
+      "Properties": {
+        "Name": "/TEST/content-api/concierge-graphql/aws/auth_table",
+        "Tags": {
+          "Stack": "content-api",
+          "Stage": "TEST",
+          "gu:cdk:version": "TEST",
+          "gu:repo": "guardian/concierge-graphql",
+        },
+        "Type": "String",
+        "Value": {
+          "Ref": "AuthTable0711E62F",
+        },
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+    "AuthTablePolicy5F6B0D1E": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "dynamodb:GetItem",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "AuthTable0711E62F",
+                  "Arn",
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "AuthTablePolicy5F6B0D1E",
+        "Roles": [
+          {
+            "Ref": "InstanceRoleConciergegraphql96280BE9",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "AutoScalingGroupConciergegraphqlASG7A20D011": {
       "Properties": {
         "HealthCheckGracePeriod": 120,
@@ -141,10 +242,10 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     "CertificateConciergegraphqlC301CD47": {
       "DeletionPolicy": "Retain",
       "Properties": {
-        "DomainName": "concierge-graphql-preview.content.code.dev-guardianapis.com",
+        "DomainName": "graphql-preview.internal.content.code.dev-guardianapis.com",
         "DomainValidationOptions": [
           {
-            "DomainName": "concierge-graphql-preview.content.code.dev-guardianapis.com",
+            "DomainName": "graphql-preview.internal.content.code.dev-guardianapis.com",
             "HostedZoneId": {
               "Ref": "SsmParameterValueaccountservicescapigutoolsTESThostedzoneidC96584B6F00A464EAD1953AFF4B05118Parameter",
             },
@@ -209,8 +310,25 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     },
     "GWApiGW36D3A369": {
       "Properties": {
+        "CorsConfiguration": {
+          "AllowCredentials": true,
+          "AllowHeaders": [
+            "content-type",
+            "x-api-key",
+          ],
+          "AllowMethods": [
+            "POST",
+            "GET",
+            "OPTIONS",
+          ],
+          "AllowOrigins": [
+            "http://localhost:8081",
+            "https://graphiql.capi.test.dev-gutools.co.uk",
+          ],
+          "MaxAge": 300,
+        },
         "Description": "Gateway for the TEST concierge-graphql instance",
-        "Name": "ApiGW",
+        "Name": "concierge-graphql-TEST",
         "ProtocolType": "HTTP",
         "Tags": {
           "Stack": "content-api",
@@ -258,12 +376,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         },
         "PayloadFormatVersion": "1.0",
         "TlsConfig": {
-          "ServerNameToVerify": {
-            "Fn::GetAtt": [
-              "LoadBalancerConciergegraphql238A0C8B",
-              "DNSName",
-            ],
-          },
+          "ServerNameToVerify": "graphql-preview.internal.content.code.dev-guardianapis.com",
         },
       },
       "Type": "AWS::ApiGatewayV2::Integration",
@@ -295,16 +408,9 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
             ],
           },
         ],
-        "SubnetIds": [
-          {
-            "Fn::Select": [
-              0,
-              {
-                "Ref": "subnets",
-              },
-            ],
-          },
-        ],
+        "SubnetIds": {
+          "Ref": "subnets",
+        },
         "Tags": {
           "Stack": "content-api",
           "Stage": "TEST",
@@ -313,44 +419,6 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         },
       },
       "Type": "AWS::ApiGatewayV2::VpcLink",
-    },
-    "GWGQLUsagePlanDDFEB42C": {
-      "Properties": {
-        "ApiStages": [
-          {
-            "ApiId": {
-              "Ref": "GWApiGW36D3A369",
-            },
-            "Stage": "$default",
-            "Throttle": {
-              "$default": {
-                "BurstLimit": 150,
-                "RateLimit": 50,
-              },
-            },
-          },
-        ],
-        "Description": "Usage plan for access to concierge-graphql",
-        "Tags": [
-          {
-            "Key": "gu:cdk:version",
-            "Value": "TEST",
-          },
-          {
-            "Key": "gu:repo",
-            "Value": "guardian/concierge-graphql",
-          },
-          {
-            "Key": "Stack",
-            "Value": "content-api",
-          },
-          {
-            "Key": "Stage",
-            "Value": "TEST",
-          },
-        ],
-      },
-      "Type": "AWS::ApiGateway::UsagePlan",
     },
     "GetDistributablePolicyConciergegraphql510C52ED": {
       "Properties": {
@@ -384,6 +452,105 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       },
       "Type": "AWS::IAM::Policy",
     },
+    "GraphiQLDistroDDB6F81C": {
+      "Properties": {
+        "DistributionConfig": {
+          "Aliases": [
+            "graphiql.capi.test.dev-gutools.co.uk",
+          ],
+          "CustomErrorResponses": [
+            {
+              "ErrorCachingMinTTL": 5,
+              "ErrorCode": 403,
+              "ResponseCode": 200,
+              "ResponsePagePath": "/index.html",
+            },
+          ],
+          "DefaultCacheBehavior": {
+            "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+            "Compress": true,
+            "TargetOriginId": "ConciergeGraphqlGraphiQLDistroOrigin1368BF828",
+            "ViewerProtocolPolicy": "redirect-to-https",
+          },
+          "DefaultRootObject": "index.html",
+          "Enabled": true,
+          "HttpVersion": "http2",
+          "IPV6Enabled": true,
+          "Origins": [
+            {
+              "DomainName": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Ref": "StaticBucketName",
+                    },
+                    ".s3.",
+                    {
+                      "Ref": "AWS::Region",
+                    },
+                    ".",
+                    {
+                      "Ref": "AWS::URLSuffix",
+                    },
+                  ],
+                ],
+              },
+              "Id": "ConciergeGraphqlGraphiQLDistroOrigin1368BF828",
+              "OriginPath": "/TEST/graphiql-explorer",
+              "S3OriginConfig": {
+                "OriginAccessIdentity": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "origin-access-identity/cloudfront/",
+                      {
+                        "Ref": "GraphiQLDistroOrigin1S3OriginE0C3987C",
+                      },
+                    ],
+                  ],
+                },
+              },
+            },
+          ],
+          "PriceClass": "PriceClass_100",
+          "ViewerCertificate": {
+            "AcmCertificateArn": {
+              "Ref": "ExplorerCertArn",
+            },
+            "MinimumProtocolVersion": "TLSv1.2_2021",
+            "SslSupportMethod": "sni-only",
+          },
+        },
+        "Tags": [
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/concierge-graphql",
+          },
+          {
+            "Key": "Stack",
+            "Value": "content-api",
+          },
+          {
+            "Key": "Stage",
+            "Value": "TEST",
+          },
+        ],
+      },
+      "Type": "AWS::CloudFront::Distribution",
+    },
+    "GraphiQLDistroOrigin1S3OriginE0C3987C": {
+      "Properties": {
+        "CloudFrontOriginAccessIdentityConfig": {
+          "Comment": "Identity for ConciergeGraphqlGraphiQLDistroOrigin1368BF828",
+        },
+      },
+      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+    },
     "GuHttpsEgressSecurityGroupConciergegraphql1855BF47": {
       "Properties": {
         "GroupDescription": "Allow all outbound HTTPS traffic",
@@ -394,6 +561,13 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
             "FromPort": 443,
             "IpProtocol": "tcp",
             "ToPort": 443,
+          },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "Allow outgoing connections to Elasticsearch",
+            "FromPort": 9200,
+            "IpProtocol": "tcp",
+            "ToPort": 9200,
           },
         ],
         "Tags": [
@@ -438,6 +612,27 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         "SourceSecurityGroupId": {
           "Fn::GetAtt": [
             "InternalIngressSecurityGroupConciergegraphqlA6B6FA94",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "GuHttpsEgressSecurityGroupConciergegraphqlfromConciergeGraphqlLinkageSGConciergegraphqlB4BBACD5900025BE65A9": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 9000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "GuHttpsEgressSecurityGroupConciergegraphql1855BF47",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "LinkageSGConciergegraphql642E0A21",
             "GroupId",
           ],
         },
@@ -720,6 +915,12 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
           {
             "Fn::GetAtt": [
               "InternalIngressSecurityGroupConciergegraphqlA6B6FA94",
+              "GroupId",
+            ],
+          },
+          {
+            "Fn::GetAtt": [
+              "LinkageSGConciergegraphql642E0A21",
               "GroupId",
             ],
           },
@@ -1033,6 +1234,13 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
             "IpProtocol": "tcp",
             "ToPort": 1515,
           },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "Description": "Allow outgoing connections to Elasticsearch",
+            "FromPort": 9200,
+            "IpProtocol": "tcp",
+            "ToPort": 9200,
+          },
         ],
         "Tags": [
           {
@@ -1072,6 +1280,27 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         "SourceSecurityGroupId": {
           "Fn::GetAtt": [
             "InternalIngressSecurityGroupConciergegraphqlA6B6FA94",
+            "GroupId",
+          ],
+        },
+        "ToPort": 9000,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "WazuhSecurityGroupfromConciergeGraphqlLinkageSGConciergegraphqlB4BBACD590001E26A8A8": {
+      "Properties": {
+        "Description": "Load balancer to target",
+        "FromPort": 9000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "WazuhSecurityGroup",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "LinkageSGConciergegraphql642E0A21",
             "GroupId",
           ],
         },

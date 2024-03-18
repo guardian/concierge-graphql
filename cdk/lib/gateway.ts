@@ -1,18 +1,23 @@
 import {Construct} from "constructs";
-import type {GuStack, GuStackProps} from "@guardian/cdk/lib/constructs/core";
-import {HttpApi, VpcLink} from "aws-cdk-lib/aws-apigatewayv2"
-import {HttpAlbIntegration, HttpUrlIntegration} from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import {IApplicationLoadBalancer, IListener} from "aws-cdk-lib/aws-elasticloadbalancingv2";
-import {ISecurityGroup, IVpc, Peer, Port, SecurityGroup, SubnetSelection} from "aws-cdk-lib/aws-ec2";
+import type {GuStack} from "@guardian/cdk/lib/constructs/core";
+import {CorsHttpMethod, HttpApi, VpcLink} from "aws-cdk-lib/aws-apigatewayv2"
+import {HttpAlbIntegration} from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import {IApplicationLoadBalancer} from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import {ISecurityGroup, IVpc, Peer, Port, SubnetSelection} from "aws-cdk-lib/aws-ec2";
 import {GuSecurityGroup} from "@guardian/cdk/lib/constructs/ec2";
-import {CfnUsagePlan, UsagePlan} from "aws-cdk-lib/aws-apigateway";
 import {IApplicationListener} from "aws-cdk-lib/aws-elasticloadbalancingv2/lib/alb/application-listener";
+import {Duration} from "aws-cdk-lib";
+import {hostingDomain} from "./constants";
+
+export type ValidStages = "CODE-AARDVARK"|"PROD-AARDVARK"|"CODE-ZEBRA"|"PROD-ZEBRA";
 
 interface HttpGatewayProps {
-    stage: "CODE"|"PROD";
+    stage: ValidStages;
+    previewMode: boolean;
     backendLoadbalancer: IApplicationLoadBalancer;
     backendListener: IApplicationListener;
     backendLbIncomingSg: ISecurityGroup;
+    lbDomainName: string;
     subnets: SubnetSelection;
     vpc: IVpc;
 }
@@ -40,30 +45,42 @@ export class HttpGateway extends Construct {
             vpcLinkName: `VpcLink-concierge-graphql-${props.stage}`
         });
 
+        const maybePreview = props.previewMode ? "preview-" : "";
+        const deployedUrl = hostingDomain[props.stage];
+
         const httpApi = new HttpApi(this, "ApiGW", {
-            description: `Gateway for the ${props.stage} concierge-graphql instance`,
+            apiName: `concierge-graphql-${maybePreview}${props.stage}`,
+            description: `Gateway for the ${props.stage} concierge-graphql${maybePreview} instance`,
             defaultIntegration: new HttpAlbIntegration('DefaultIntegration', props.backendListener, {
                 vpcLink,
-                secureServerName: props.backendLoadbalancer.loadBalancerDnsName,
+                secureServerName: props.lbDomainName,
             }),
+            corsPreflight: {
+                allowOrigins: ['http://localhost:8081', `https://${deployedUrl}`],
+                allowMethods: [CorsHttpMethod.POST, CorsHttpMethod.GET, CorsHttpMethod.OPTIONS],
+                allowHeaders: ['content-type', 'x-api-key'],
+                maxAge: Duration.minutes(5),
+                allowCredentials: true
+            },
             createDefaultStage: true,
         });
-
-        const plan = new CfnUsagePlan(this, "GQLUsagePlan", {
-            apiStages: [
-                {
-                    apiId: httpApi.apiId,
-                    stage: httpApi.defaultStage?.stageName,
-                    throttle: {
-                        "$default": {
-                            burstLimit: 150,
-                            rateLimit: 50
-                        }
-                    }
-                }
-            ],
-            description: "Usage plan for access to concierge-graphql"
-        });
+        //
+        // const plan = new CfnUsagePlan(this, "GQLUsagePlan", {
+        //     apiStages: [
+        //         {
+        //             apiId: httpApi.apiId,
+        //             stage: httpApi.defaultStage?.stageName,
+        //             throttle: {
+        //                 "$default": {
+        //                     burstLimit: 150,
+        //                     rateLimit: 50
+        //                 }
+        //             }
+        //         }
+        //     ],
+        //     description: "Usage plan for access to concierge-graphql"
+        // });
+        // plan.node.addDependency(httpApi);
 
     }
 }

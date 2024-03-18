@@ -1,5 +1,10 @@
 regions:
   - eu-west-1
+allowedStages:
+  - CODE-AARDVARK
+  - PROD-AARDVARK
+  - CODE-ZEBRA
+  - PROD-ZEBRA
 deployments:
   cloudformation:
     type: cloud-formation
@@ -16,26 +21,42 @@ deployments:
         Recipe: ubuntu-focal-capi-arm-jdk11
         AmigoStage: PROD
         BuiltBy: amigo
-  cloudformation-preview:
-    type: cloud-formation
-    app: concierge-graphql
-    stacks:
-      - content-api-preview
-    parameters:
-      templateStagePaths:
-        CODE-AARDVARK: ConciergeGraphql-preview-CODE-AARDVARK.template.json
-        PROD-AARDVARK: ConciergeGraphql-preview-PROD-AARDVARK.template.json
-      amiParameter: AMIConciergegraphql
-      amiEncrypted: true
-      amiTags:
-        Recipe: ubuntu-focal-capi-arm-jdk11
-        AmigoStage: PROD
-        BuiltBy: amigo
+#  cloudformation-preview:
+#    type: cloud-formation
+#    app: concierge-graphql
+#    stacks:
+#      - content-api-preview
+#    parameters:
+#      templateStagePaths:
+#        CODE-AARDVARK: ConciergeGraphql-preview-CODE-AARDVARK.template.json
+#        PROD-AARDVARK: ConciergeGraphql-preview-PROD-AARDVARK.template.json
+#      amiParameter: AMIConciergegraphql
+#      amiEncrypted: true
+#      amiTags:
+#        Recipe: ubuntu-focal-capi-arm-jdk11
+#        AmigoStage: PROD
+#        BuiltBy: amigo
   concierge-graphql:
     type: autoscaling
     stacks:
       - content-api
-      - content-api-preview
+#      - content-api-preview
     parameters:
       bucketSsmLookup: true
-    dependencies: [ cloudformation, cloudformation-preview ]
+    dependencies: [ cloudformation ]
+#    dependencies: [ cloudformation, cloudformation-preview ]
+
+  graphiql-explorer:
+    type: aws-s3
+    stacks:
+      - content-api #we don't need multiple stacks here
+    parameters:
+      bucketSsmKey: /account/services/static.serving.bucket
+      cacheControl:
+        - pattern: ".*.html$"
+          value: "public, max-age=60"
+        - pattern: ".*"
+          value: "public, max-age=3600"
+      publicReadAcl: true
+      prefixStack: false
+    dependencies: ["cloudformation"]

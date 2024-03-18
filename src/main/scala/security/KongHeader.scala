@@ -4,7 +4,7 @@ import cats.effect.IO
 import org.http4s.Request
 import org.typelevel.ci.CIString
 
-object KongHeader {
+object  KongHeader {
   val name = CIString("X-Consumer-Username")
 
   /**

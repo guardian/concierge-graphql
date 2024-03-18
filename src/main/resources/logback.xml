@@ -14,10 +14,11 @@
 
     <logger name="datastore" level="debug"/>
     <logger name="anotherschema" level="debug"/>
-
+    <logger name="security" level="info"/>
+    <logger name="ElasticSearchResolver" level="debug"/>
     <root level="INFO">
-        <!--<appender-ref ref="json-encoded"/>-->
-        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="json-encoded"/>
+        <!--<appender-ref ref="CONSOLE"/>-->
     </root>
 
 </configuration>

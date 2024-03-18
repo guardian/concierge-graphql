@@ -68,8 +68,12 @@ lazy val root = (project in file("."))
       "io.prometheus" % "simpleclient_common" % prometheusVersion,
 
       // test kit
-      "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test"
-    ),
+      "com.sksamuel.elastic4s" %% "elastic4s-testkit" % elastic4sVersion % "test",
+
+      // AWS auth
+      "software.amazon.awssdk" % "dynamodb" % "2.25.10",
+      "com.gu" %% "simple-configuration-ssm" % "1.7.0",
+),
     dependencyOverrides ++= Seq(
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.13.5",  //required for json logging encoder
       "io.netty" % "netty-handler" % "4.1.94.Final",

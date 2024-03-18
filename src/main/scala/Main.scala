@@ -1,7 +1,5 @@
 import cats.effect._
-import cats.effect.unsafe.implicits.global
 import com.comcast.ip4s.{IpLiteralSyntax, Ipv4Address, Ipv6Address}
-import com.sksamuel.elastic4s.ElasticNodeEndpoint
 import datastore.ElasticsearchRepo
 import io.prometheus.client.hotspot.DefaultExports
 import org.http4s._
@@ -10,26 +8,32 @@ import org.http4s.server.Router
 import org.http4s.ember.server._
 import org.http4s.implicits._
 import org.slf4j.LoggerFactory
-import security.Security.limitByTier
-import security.{DeveloperTier, InternalTier, UserTier}
+import security.{ApiKeyAuth, DeveloperTier, InternalTier, Security, UserTier}
 import internalmetrics.PrometheusMetrics
 
 import scala.concurrent.duration._
+import utils.Config.fetchConfig
 
 object Main extends IOApp {
   private val logger = LoggerFactory.getLogger(getClass)
+  val config = fetchConfig().get  //it's OK to throw exception here, that will then block startup
+
   DefaultExports.initialize()
-  val documentRepo = new ElasticsearchRepo(ElasticSearchResolver.resolve())
+  val documentRepo = new ElasticsearchRepo(ElasticSearchResolver.resolve(config))
   val server = new GraphQLServer(documentRepo)
+
+  private val security = Security(config)
 
   val graphqlService = HttpRoutes.of[IO] {
     case OPTIONS -> Root / "query" =>
       IO(Response(
         Status.Ok,
-        headers=Headers("Access-Control-Allow-Origin" -> "*", "Access-Control-Allow-Methods"->"POST, GET, OPTIONS", "Access-Control-Allow-Headers" -> s"Content-Type, ${security.KongHeader.name}")
+        headers=Headers("Access-Control-Allow-Origin" -> "http://localhost:8081",
+          "Access-Control-Allow-Methods"->"POST, GET, OPTIONS",
+          "Access-Control-Allow-Headers" -> s"Content-Type, ${ApiKeyAuth.name.toString}")
       ))
     case req @ POST -> Root / "query" =>
-      limitByTier(req, DeveloperTier) { tier=>
+      security.limitByTier(req, DeveloperTier) { tier=>
         server.handleRequest(req, tier)
           .compile
           .onlyOrError
