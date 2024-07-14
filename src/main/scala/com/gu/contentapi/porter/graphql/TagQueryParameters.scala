@@ -96,13 +96,29 @@ object TagQueryParameters {
     )
   )
 
+  val FuzzinessOptions = EnumType(
+    "FuzzinessOptions",
+    Some("Valid options for making a fuzzy-match query"),
+    List(
+      EnumValue("AUTO",
+        value="AUTO",
+        description=Some("Generates an edit distance based on the length of the term. If the term is >5 chars, then 2 edits allowed; if <3 chars than no edits allowed")
+      ),
+      EnumValue("OFF",
+        value="OFF",
+        description=Some("Disable fuzzy-matching")
+      )
+    )
+  )
+
   val tagId = Argument("tagId", OptionInputType(StringType), description = "Retrieve this specific tag")
   val Section = Argument("section", OptionInputType(StringType), description = "Only return tags from this section")
   val TagType = Argument("type", OptionInputType(TagTypes), description = "Type of the tag to return")
-  val QueryString = Argument("q", OptionInputType(StringType), description = "Generic Lucene query string for finding tags")
+  val QueryString = Argument("q", OptionInputType(StringType), description = "Search for tags that match this public-facing name")
+  val Fuzziness = Argument("fuzzy", OptionInputType(FuzzinessOptions), description = "Perform a fuzzy-matching query (default). Set to `OFF` to disable fuzzy-matching.")
   val Category = Argument("category", OptionInputType(StringType), description = "A category to match against tags")
   val Reference = Argument("reference", OptionInputType(StringType), description = "A reference to match against tags")
-  val AllTagQueryParameters = QueryString :: tagId :: Section :: TagType :: Category ::
+  val AllTagQueryParameters = QueryString :: tagId :: Section :: TagType :: Fuzziness :: Category ::
     Reference :: Cursor :: OrderBy :: Limit :: Nil
 
   val NonPaginatedTagQueryParameters = Section :: TagType :: Nil

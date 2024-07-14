@@ -21,6 +21,7 @@ trait DocumentRepo {
                      limit: Option[Int], cursor: Option[String]): Future[Edge[Content]]
 
   def marshalledTags(maybeQuery:Option[String],
+                     maybeFuzziness:Option[String],
                      maybeTagId:Option[String],
                      maybeSection: Option[String],
                      tagType:Option[String],

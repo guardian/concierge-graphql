@@ -8,7 +8,7 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
-import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, NestedQuery, Query, RangeQuery}
+import com.sksamuel.elastic4s.requests.searches.queries.{DisMaxQuery, ExistsQuery, Fuzzy, FuzzyQuery, NestedQuery, Query, RangeQuery}
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.queries.matches.{FieldWithOptionalBoost, MatchAllQuery, MatchQuery, MultiMatchQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, ScoreSort, Sort, SortOrder}
@@ -185,8 +185,19 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
 
   private def tagQueryParams(maybeTagId:Option[String], maybeSection:Option[String],
                              tagType:Option[String], maybeCategory:Option[String],
-                             maybeReferences: Option[String]):Seq[Query] = {
+                             maybeReferences: Option[String], queryString:Option[String], fuzziness:Option[String]):Seq[Query] = {
     Seq(
+      queryString.map(qs=>{
+        if(fuzziness.getOrElse("AUTO") != "OFF") {
+          //Why DisMax here? Because we want to include exact-matches as well, if they are relevant. E.g. FuzzyQuery on "politics" returns no results!
+          DisMaxQuery(Seq(
+            FuzzyQuery("webTitle", qs, fuzziness),
+            MatchQuery("webTitle", qs)
+          ))
+        } else {
+          MatchQuery("webTitle", qs)
+        }
+      }),
       maybeTagId.map(MatchQuery("id", _)),
       maybeSection.map(MatchQuery("sectionId", _)),
       tagType.map({
@@ -204,18 +215,16 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
   private def buildTagQuery(maybeTagId:Option[String],
                             maybeSection:Option[String],
                             tagType:Option[String], maybeQuery:Option[String],
+                            maybeFuzziness:Option[String],
                             maybeCategory:Option[String], maybeReferences:Option[String]) = {
     val baseSearch = search("tag")
-    val searchWithQuery = maybeQuery match {
-      case Some(q)=>baseSearch.query(q)
-      case None=>baseSearch
-    }
-    val params = tagQueryParams(maybeTagId, maybeSection, tagType, maybeCategory, maybeReferences)
+
+    val params = tagQueryParams(maybeTagId, maybeSection, tagType, maybeCategory, maybeReferences, maybeQuery, maybeFuzziness)
 
     if(params.isEmpty) {
-      searchWithQuery
+      baseSearch
     } else {
-      searchWithQuery.query(BoolQuery(must=params))
+      baseSearch.query(BoolQuery(must=params))
     }
   }
 
@@ -230,6 +239,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
   //FIXME: tagsForList / marshalledTags could be DRY'd out a bit
 
   override def marshalledTags(maybeQuery:Option[String],
+                              maybeFuzziness:Option[String],
                               maybeTagId:Option[String],
                               maybeSection: Option[String],
                               tagType:Option[String],
@@ -249,7 +259,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     Edge.decodeCursor(cursor) match {
       case Right(maybeCursor)=>
         client.execute {
-          buildTagQuery(maybeTagId, maybeSection, tagType, maybeQuery, maybeCategory, maybeReferences)
+          buildTagQuery(maybeTagId, maybeSection, tagType, maybeQuery, maybeFuzziness, maybeCategory, maybeReferences)
             .sortBy(sortParam)
             .limit(pageSize)
             .searchAfter(maybeCursor)
@@ -281,7 +291,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     val tagIdMatches = tagIdList.map(MatchQuery("id", _))
 
     val response = client.execute {
-      val restrictions = tagQueryParams(None, maybeSection, tagType, maybeCategory, maybeReferences)
+      val restrictions = tagQueryParams(None, maybeSection, tagType, maybeCategory, maybeReferences, None, None)
 
       if(restrictions.nonEmpty) {
         search("tag").query(

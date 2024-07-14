@@ -74,6 +74,7 @@ object RootQuery {
         arguments = TagQueryParameters.AllTagQueryParameters,
         resolve = ctx =>
           ctx.ctx.repo.marshalledTags(ctx arg TagQueryParameters.QueryString,
+            ctx arg TagQueryParameters.Fuzziness,
             ctx arg TagQueryParameters.tagId,
             ctx arg TagQueryParameters.Section,
             ctx arg TagQueryParameters.TagType,
