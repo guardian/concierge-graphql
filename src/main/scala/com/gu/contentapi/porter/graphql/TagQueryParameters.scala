@@ -99,7 +99,11 @@ object TagQueryParameters {
   val tagId = Argument("tagId", OptionInputType(StringType), description = "Retrieve this specific tag")
   val Section = Argument("section", OptionInputType(StringType), description = "Only return tags from this section")
   val TagType = Argument("type", OptionInputType(TagTypes), description = "Type of the tag to return")
-  val AllTagQueryParameters = tagId :: Section :: TagType :: Cursor :: OrderBy :: Limit :: Nil
+  val QueryString = Argument("q", OptionInputType(StringType), description = "Generic Lucene query string for finding tags")
+  val Category = Argument("category", OptionInputType(StringType), description = "A category to match against tags")
+  val Reference = Argument("reference", OptionInputType(StringType), description = "A reference to match against tags")
+  val AllTagQueryParameters = QueryString :: tagId :: Section :: TagType :: Category ::
+    Reference :: Cursor :: OrderBy :: Limit :: Nil
 
   val NonPaginatedTagQueryParameters = Section :: TagType :: Nil
 }

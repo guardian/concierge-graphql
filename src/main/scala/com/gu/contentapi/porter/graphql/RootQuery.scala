@@ -73,7 +73,14 @@ object RootQuery {
       Field("tag", TagEdge,
         arguments = TagQueryParameters.AllTagQueryParameters,
         resolve = ctx =>
-          ctx.ctx.repo.marshalledTags(ctx arg TagQueryParameters.tagId, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
+          ctx.ctx.repo.marshalledTags(ctx arg TagQueryParameters.QueryString,
+            ctx arg TagQueryParameters.tagId,
+            ctx arg TagQueryParameters.Section,
+            ctx arg TagQueryParameters.TagType,
+            ctx arg TagQueryParameters.Category,
+            ctx arg TagQueryParameters.Reference,
+            ctx arg PaginationParameters.OrderBy,
+            ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
       ),
       Field("atom", AtomEdge,
         arguments = AtomQueryParameters.AllParameters,

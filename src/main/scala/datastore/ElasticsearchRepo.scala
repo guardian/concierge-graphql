@@ -183,7 +183,9 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
-  private def tagQueryParams(maybeTagId:Option[String], maybeSection:Option[String], tagType:Option[String]):Seq[Query] = {
+  private def tagQueryParams(maybeTagId:Option[String], maybeSection:Option[String],
+                             tagType:Option[String], maybeCategory:Option[String],
+                             maybeReferences: Option[String]):Seq[Query] = {
     Seq(
       maybeTagId.map(MatchQuery("id", _)),
       maybeSection.map(MatchQuery("sectionId", _)),
@@ -192,18 +194,28 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
           ExistsQuery("podcast")
         case tp: String =>
           MatchQuery("type", tp)
-      })
+      }),
+      maybeSection.map(s=>termQuery("section",s)),
+      maybeCategory.map(cat=>termQuery("tagCategories", cat)),
+      maybeReferences.map(ref=>termQuery("references", ref))  //this is an object field - check how terming works!!
     ).collect({ case Some(param) => param })
   }
-  private def buildTagQuery(maybeTagId:Option[String], maybeSection:Option[String], tagType:Option[String]) = {
-    val base = search("tag")
 
-    val params = tagQueryParams(maybeTagId, maybeSection, tagType)
+  private def buildTagQuery(maybeTagId:Option[String],
+                            maybeSection:Option[String],
+                            tagType:Option[String], maybeQuery:Option[String],
+                            maybeCategory:Option[String], maybeReferences:Option[String]) = {
+    val baseSearch = search("tag")
+    val searchWithQuery = maybeQuery match {
+      case Some(q)=>baseSearch.query(q)
+      case None=>baseSearch
+    }
+    val params = tagQueryParams(maybeTagId, maybeSection, tagType, maybeCategory, maybeReferences)
 
     if(params.isEmpty) {
-      base
+      searchWithQuery
     } else {
-      base.query(BoolQuery(must=params))
+      searchWithQuery.query(BoolQuery(must=params))
     }
   }
 
@@ -217,7 +229,15 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
 
   //FIXME: tagsForList / marshalledTags could be DRY'd out a bit
 
-  override def marshalledTags(maybeTagId:Option[String], maybeSection: Option[String], tagType:Option[String], orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Tag]] = {
+  override def marshalledTags(maybeQuery:Option[String],
+                              maybeTagId:Option[String],
+                              maybeSection: Option[String],
+                              tagType:Option[String],
+                              maybeCategory:Option[String],
+                              maybeReferences:Option[String],
+                              orderBy: Option[SortOrder],
+                              limit: Option[Int],
+                              cursor: Option[String]): Future[Edge[Tag]] = {
     val pageSize = limit.getOrElse(defaultPageSize)
 
     val sortParam = if(maybeSection.isDefined || tagType.isDefined) {
@@ -229,7 +249,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     Edge.decodeCursor(cursor) match {
       case Right(maybeCursor)=>
         client.execute {
-          buildTagQuery(maybeTagId, maybeSection, tagType)
+          buildTagQuery(maybeTagId, maybeSection, tagType, maybeQuery, maybeCategory, maybeReferences)
             .sortBy(sortParam)
             .limit(pageSize)
             .searchAfter(maybeCursor)
@@ -239,25 +259,10 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
-  override def tagsForList(tagIdList:Seq[String], maybeSection: Option[String], tagType:Option[String]):Future[Seq[Tag]] = {
-    val tagIdMatches = tagIdList.map(MatchQuery("id", _))
-
-    client.execute {
-      val restrictions = tagQueryParams(None, maybeSection, tagType)
-
-      if(restrictions.nonEmpty) {
-        search("tag").query(
-            BoolQuery(
-              must=restrictions :+ BoolQuery(should=tagIdMatches)
-            )
-          )
-      } else {
-        search("tag").query(BoolQuery(should=tagIdMatches))
-      }
-
-    } flatMap { response=>
+  private def marshalTags(response:Future[Response[SearchResponse]]):Future[Seq[Tag]] = {
+    response flatMap { response=>
       if(response.isError) {
-        logger.error(s"Could not make query for tags ${tagIdList}: ${response.error}")
+        logger.error(s"Could not make query for tags: ${response.error}")
         Future.failed(response.error.asException)
       } else {
         Future(response.result.hits.hits.map(hit=>
@@ -270,6 +275,25 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
           .map(_.toSeq)
       }
     }
+  }
+
+  override def tagsForList(tagIdList:Seq[String], maybeSection: Option[String], tagType:Option[String], maybeCategory:Option[String], maybeReferences:Option[String]):Future[Seq[Tag]] = {
+    val tagIdMatches = tagIdList.map(MatchQuery("id", _))
+
+    val response = client.execute {
+      val restrictions = tagQueryParams(None, maybeSection, tagType, maybeCategory, maybeReferences)
+
+      if(restrictions.nonEmpty) {
+        search("tag").query(
+            BoolQuery(
+              must=restrictions :+ BoolQuery(should=tagIdMatches)
+            )
+          )
+      } else {
+        search("tag").query(BoolQuery(should=tagIdMatches))
+      }
+    }
+    marshalTags(response)
   }
 
   private def findAtoms(atomIds: Option[Seq[String]], queryString: Option[String],

@@ -147,7 +147,7 @@ object Content {
 
     ReplaceField("tags", Field("tags", OptionType(ListType(Tags.Tag)),
       arguments = TagQueryParameters.NonPaginatedTagQueryParameters,
-      resolve=ctx=> ctx.ctx.repo.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType))
+      resolve=ctx=> ctx.ctx.repo.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg TagQueryParameters.Category, ctx arg TagQueryParameters.Reference))
     ),
     ExcludeFields("atomIds", "isGone", "isExpired", "sectionId"),
     AddFields(
