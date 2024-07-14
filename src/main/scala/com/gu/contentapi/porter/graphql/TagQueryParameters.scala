@@ -121,5 +121,6 @@ object TagQueryParameters {
   val AllTagQueryParameters = QueryString :: tagId :: Section :: TagType :: Fuzziness :: Category ::
     Reference :: Cursor :: OrderBy :: Limit :: Nil
 
-  val NonPaginatedTagQueryParameters = Section :: TagType :: Nil
+  val NonPaginatedTagQueryParameters = QueryString :: tagId :: Section :: TagType :: Fuzziness :: Category ::
+    Reference :: Nil
 }

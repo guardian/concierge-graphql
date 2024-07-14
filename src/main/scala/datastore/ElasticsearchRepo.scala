@@ -163,7 +163,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
       Some(limitToChannelQuery(selectedChannel)),
       queryString.map(MultiMatchQuery(_, fields = fieldsToQuery)),
       atomId.map(MatchQuery("atomIds.id", _)),
-      tagIds.map(tags=>BoolQuery(must=tags.map(MatchQuery("tags", _)))) ,
+      tagIds.map(tags=>BoolQuery(should=tags.map(MatchQuery("tags", _)))) ,
       excludeTags.map(tags=>BoolQuery(not=Seq(BoolQuery(should=tags.map(MatchQuery("tags", _)))))),
       sectionIds.map(s=>BoolQuery(should=s.map(MatchQuery("sectionId", _)))),
       excludeSections.map(s=>BoolQuery(not=Seq(BoolQuery(should=s.map(MatchQuery("sectionId", _))))))

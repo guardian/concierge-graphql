@@ -1,6 +1,7 @@
 package com.gu.contentapi.porter.graphql
 
 import com.gu.contentapi.porter.model.{Content, Tag}
+import com.sksamuel.elastic4s.requests.searches.sort.SortOrder
 import sangria.schema._
 import datastore.GQLQueryContext
 import deprecated.anotherschema.Edge
@@ -24,14 +25,32 @@ object RootQuery {
     )
   )
 
-  val TagEdge: ObjectType[Unit, Edge[Tag]] = ObjectType(
+  val TagEdge: ObjectType[GQLQueryContext, Edge[Tag]] = ObjectType(
     "TagEdge",
     "A list of tags with pagination features",
-    () => fields[Unit, Edge[Tag]](
+    () => fields[GQLQueryContext, Edge[Tag]](
       Field("totalCount", LongType, Some("Total number of results that match your query"), resolve = _.value.totalCount),
       Field("endCursor", OptionType(StringType), Some("The last record cursor in the set"), resolve = _.value.endCursor),
       Field("hasNextPage", BooleanType, Some("Whether there are any more records to retrieve"), resolve = _.value.hasNextPage),
-      Field("nodes", ListType(com.gu.contentapi.porter.graphql.Tags.Tag), Some("The actual tags returned"), resolve = _.value.nodes)
+      Field("nodes", ListType(com.gu.contentapi.porter.graphql.Tags.Tag), Some("The actual tags returned"), resolve = _.value.nodes),
+      Field("matching_content", ArticleEdge, Some("Content which matches any of the tags returned"),
+        arguments= ContentQueryParameters.AllContentQueryParameters,
+        resolve = { ctx=>
+         ctx.ctx.repo.marshalledDocs(ctx arg ContentQueryParameters.QueryString,
+           queryFields=ctx arg ContentQueryParameters.QueryFields,
+           atomId = None,
+           forChannel = ctx arg ContentQueryParameters.ChannelArg,
+           userTier = ctx.ctx.userTier,
+           tagIds = Some(ctx.value.nodes.map(_.id)),
+           excludeTags = ctx arg ContentQueryParameters.ExcludeTagArg,
+           sectionIds = ctx arg ContentQueryParameters.SectionArg,
+           excludeSections = ctx arg ContentQueryParameters.ExcludeSectionArg,
+           orderDate = ctx arg PaginationParameters.OrderDate,
+           orderBy = ctx arg PaginationParameters.OrderBy,
+           limit = ctx arg PaginationParameters.Limit,
+           cursor = ctx arg PaginationParameters.Cursor,
+         )
+      })
     )
   )
 
