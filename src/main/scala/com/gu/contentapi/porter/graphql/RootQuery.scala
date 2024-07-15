@@ -33,7 +33,7 @@ object RootQuery {
       Field("endCursor", OptionType(StringType), Some("The last record cursor in the set"), resolve = _.value.endCursor),
       Field("hasNextPage", BooleanType, Some("Whether there are any more records to retrieve"), resolve = _.value.hasNextPage),
       Field("nodes", ListType(com.gu.contentapi.porter.graphql.Tags.Tag), Some("The actual tags returned"), resolve = _.value.nodes),
-      Field("matching_content", ArticleEdge, Some("Content which matches any of the tags returned"),
+      Field("matchingAnyTag", ArticleEdge, Some("Content which matches any of the tags returned"),
         arguments= ContentQueryParameters.AllContentQueryParameters,
         resolve = { ctx=>
          ctx.ctx.repo.marshalledDocs(ctx arg ContentQueryParameters.QueryString,
