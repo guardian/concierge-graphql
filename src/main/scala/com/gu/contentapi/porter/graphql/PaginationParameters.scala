@@ -17,8 +17,9 @@ object PaginationParameters {
   object OrderDateSchema {
     val definition = EnumType(
       "OrderDate",
-      Some("Which date field to use for ordering the content"),
+      Some("Which date field to use for ordering the content, or whether to search on document score"),
       List(
+        EnumValue("score", Some("Ignore when the content was made or published and sort by relevance to the query parameters"), "score"),
         EnumValue("published", Some("When the content was published to web"), "webPublicationDate"),
         EnumValue("firstPublished", Some("When the first version of this content was published"), "fields.firstPublicationDate"),
         EnumValue("lastModified", Some("The last time the content was modified prior to publication"), "fields.lastModified"),

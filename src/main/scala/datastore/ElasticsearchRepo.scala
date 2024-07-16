@@ -73,8 +73,9 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
 
   private def defaultingSortParam(orderDate:Option[String], orderBy:Option[SortOrder]): Sort = {
     orderDate match {
+      case Some("score")=>ScoreSort(orderBy.getOrElse(SortOrder.DESC))
       case Some(field)=>FieldSort(field, order = orderBy.getOrElse(SortOrder.DESC))
-      case None=>ScoreSort(orderBy.getOrElse(SortOrder.DESC))
+      case None=>FieldSort("webPublicationDate", order=orderBy.getOrElse(SortOrder.DESC))
     }
   }
 

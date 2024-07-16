@@ -11,6 +11,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import io.circe.generic.auto._
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.Future
+
 object RootQuery {
   private val logger = LoggerFactory.getLogger(getClass)
 
@@ -36,20 +38,29 @@ object RootQuery {
       Field("matchingAnyTag", ArticleEdge, Some("Content which matches any of the tags returned"),
         arguments= ContentQueryParameters.AllContentQueryParameters,
         resolve = { ctx=>
-         ctx.ctx.repo.marshalledDocs(ctx arg ContentQueryParameters.QueryString,
-           queryFields=ctx arg ContentQueryParameters.QueryFields,
-           atomId = None,
-           forChannel = ctx arg ContentQueryParameters.ChannelArg,
-           userTier = ctx.ctx.userTier,
-           tagIds = Some(ctx.value.nodes.map(_.id)),
-           excludeTags = ctx arg ContentQueryParameters.ExcludeTagArg,
-           sectionIds = ctx arg ContentQueryParameters.SectionArg,
-           excludeSections = ctx arg ContentQueryParameters.ExcludeSectionArg,
-           orderDate = ctx arg PaginationParameters.OrderDate,
-           orderBy = ctx arg PaginationParameters.OrderBy,
-           limit = ctx arg PaginationParameters.Limit,
-           cursor = ctx arg PaginationParameters.Cursor,
-         )
+          if(ctx.value.nodes.isEmpty) {
+            Future(Edge[Content](
+              0L,
+              None,
+              false,
+              Seq()
+            ))
+          } else {
+            ctx.ctx.repo.marshalledDocs(ctx arg ContentQueryParameters.QueryString,
+              queryFields = ctx arg ContentQueryParameters.QueryFields,
+              atomId = None,
+              forChannel = ctx arg ContentQueryParameters.ChannelArg,
+              userTier = ctx.ctx.userTier,
+              tagIds = Some(ctx.value.nodes.map(_.id)),
+              excludeTags = ctx arg ContentQueryParameters.ExcludeTagArg,
+              sectionIds = ctx arg ContentQueryParameters.SectionArg,
+              excludeSections = ctx arg ContentQueryParameters.ExcludeSectionArg,
+              orderDate = ctx arg PaginationParameters.OrderDate,
+              orderBy = ctx arg PaginationParameters.OrderBy,
+              limit = ctx arg PaginationParameters.Limit,
+              cursor = ctx arg PaginationParameters.Cursor,
+            )
+          }
       })
     )
   )
