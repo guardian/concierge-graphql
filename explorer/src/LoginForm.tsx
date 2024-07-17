@@ -3,7 +3,7 @@ import {GraphiQL} from "graphiql";
 import { createGraphiQLFetcher, Fetcher } from '@graphiql/toolkit';
 import {css} from "@emotion/react";
 import 'graphiql/graphiql.css';
-import {Accordion, AccordionRow,Button, TextInput} from "@guardian/source-react-components";
+import {Accordion, AccordionRow, Button, Option, Select, TextInput} from "@guardian/source-react-components";
 import {info} from "sass";
 
 const loginContainer = css`
@@ -16,6 +16,7 @@ const loginContainer = css`
 
 const loginElement = css`
     align-self: center;
+  margin-top: 1em;
 `
 const inputStyle = css`
     max-width: 800px;
@@ -42,9 +43,11 @@ const accordionContent = css`
 export const LoginForm:React.FC = () => {
     const defaultBaseUrl = localStorage.getItem("CapiGQLBase") ?? "https://";
     const defaultApiKey = localStorage.getItem("CapiGQLKey") ?? "";
+    const defaultPath = localStorage.getItem("CapiGQLPath") ?? "/query";
     const [haveCachedLogin, setHaveCachedLogin] = useState(!!(localStorage.getItem("CapiGQLBase") && localStorage.getItem("CapiGQLKey")));
 
     const [baseUrl, setBaseUrl] = useState(defaultBaseUrl);
+    const [path, setPath] = useState(defaultPath);
     const [apiKey, setApiKey] = useState(defaultApiKey);
     const [readyToGo, setReadyToGo] = useState(false);
     const [urlIsValid, setUrlIsValid] = useState(false);
@@ -66,8 +69,9 @@ export const LoginForm:React.FC = () => {
         if(readyToGo) {
             localStorage.setItem("CapiGQLBase", baseUrl);
             localStorage.setItem("CapiGQLKey", apiKey);
+            localStorage.setItem("CapiGQLPath", path);
 
-            return createGraphiQLFetcher({url: `${baseUrl}/query`, headers: {'X-Api-Key': apiKey}});
+            return createGraphiQLFetcher({url: `${baseUrl}${path}`, headers: {'X-Api-Key': apiKey}});
         } else {
             return null;
         }
@@ -94,6 +98,15 @@ export const LoginForm:React.FC = () => {
                        type="password"
                        onChange={(evt)=>setApiKey(evt.target.value)}
                        />
+            </div>
+            <div css={loginElement}>
+                <Select label="GraphQL endpoint"
+                        value={path}
+                        onChange={(evt)=>setPath(evt.target.value)}
+                >
+                    <Option value="/query">/query [Standard GraphQL]</Option>
+                    <Option value="/graphql">/graphql [AppSync]</Option>
+                </Select>
             </div>
             <div css={buttonContainer}>
                 <div>
