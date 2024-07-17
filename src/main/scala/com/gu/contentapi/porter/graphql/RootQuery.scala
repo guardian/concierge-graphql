@@ -86,6 +86,8 @@ object RootQuery {
   val Query = ObjectType[GQLQueryContext, Unit](
     "Query", fields[GQLQueryContext, Unit](
       Field("article", ArticleEdge,
+        description = Some("An Article is the main unit of our publication.  You can search articles directly here, or query" +
+          " tags or sections to see what articles live within it."),
         arguments = ContentQueryParameters.AllContentQueryParameters,
         resolve = ctx =>
           ctx arg ContentQueryParameters.ContentIdArg match {
@@ -101,6 +103,8 @@ object RootQuery {
           }
       ),
       Field("tag", TagEdge,
+        description = Some("The Guardian uses tags to group similar pieces of content together across multiple different viewpoints.  " +
+          "Tags are a closed set, which can be searched here, and there are different types of tags which represent different viewpoints"),
         arguments = TagQueryParameters.AllTagQueryParameters,
         resolve = ctx =>
           ctx.ctx.repo.marshalledTags(ctx arg TagQueryParameters.QueryString,
@@ -114,6 +118,8 @@ object RootQuery {
             ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
       ),
       Field("atom", AtomEdge,
+        description = Some("An Atom is a piece of content which can be linked to multiple articles but may have a production lifecycle independent" +
+          " of these articles.  Examples are cartoons, videos, quizzes, call-to-action blocks, etc."),
         arguments = AtomQueryParameters.AllParameters,
         resolve = ctx=>
       ctx.ctx.repo.atoms(ctx arg AtomQueryParameters.AtomIds, ctx arg AtomQueryParameters.QueryString, ctx arg AtomQueryParameters.QueryFields,
