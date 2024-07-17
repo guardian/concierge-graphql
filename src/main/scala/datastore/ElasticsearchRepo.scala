@@ -8,7 +8,7 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
-import com.sksamuel.elastic4s.requests.searches.queries.{ExistsQuery, NestedQuery, Query, RangeQuery}
+import com.sksamuel.elastic4s.requests.searches.queries.{DisMaxQuery, ExistsQuery, Fuzzy, FuzzyQuery, NestedQuery, Query, RangeQuery}
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.queries.matches.{FieldWithOptionalBoost, MatchAllQuery, MatchQuery, MultiMatchQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, ScoreSort, Sort, SortOrder}
@@ -73,8 +73,9 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
 
   private def defaultingSortParam(orderDate:Option[String], orderBy:Option[SortOrder]): Sort = {
     orderDate match {
+      case Some("score")=>ScoreSort(orderBy.getOrElse(SortOrder.DESC))
       case Some(field)=>FieldSort(field, order = orderBy.getOrElse(SortOrder.DESC))
-      case None=>ScoreSort(orderBy.getOrElse(SortOrder.DESC))
+      case None=>FieldSort("webPublicationDate", order=orderBy.getOrElse(SortOrder.DESC))
     }
   }
 
@@ -163,7 +164,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
       Some(limitToChannelQuery(selectedChannel)),
       queryString.map(MultiMatchQuery(_, fields = fieldsToQuery)),
       atomId.map(MatchQuery("atomIds.id", _)),
-      tagIds.map(tags=>BoolQuery(must=tags.map(MatchQuery("tags", _)))) ,
+      tagIds.map(tags=>BoolQuery(should=tags.map(MatchQuery("tags", _)))) ,
       excludeTags.map(tags=>BoolQuery(not=Seq(BoolQuery(should=tags.map(MatchQuery("tags", _)))))),
       sectionIds.map(s=>BoolQuery(should=s.map(MatchQuery("sectionId", _)))),
       excludeSections.map(s=>BoolQuery(not=Seq(BoolQuery(should=s.map(MatchQuery("sectionId", _))))))
@@ -183,8 +184,21 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
-  private def tagQueryParams(maybeTagId:Option[String], maybeSection:Option[String], tagType:Option[String]):Seq[Query] = {
+  private def tagQueryParams(maybeTagId:Option[String], maybeSection:Option[String],
+                             tagType:Option[String], maybeCategory:Option[String],
+                             maybeReferences: Option[String], queryString:Option[String], fuzziness:Option[String]):Seq[Query] = {
     Seq(
+      queryString.map(qs=>{
+        if(fuzziness.getOrElse("AUTO") != "OFF") {
+          //Why DisMax here? Because we want to include exact-matches as well, if they are relevant. E.g. FuzzyQuery on "politics" returns no results!
+          DisMaxQuery(Seq(
+            FuzzyQuery("webTitle", qs, fuzziness),
+            MatchQuery("webTitle", qs)
+          ))
+        } else {
+          MatchQuery("webTitle", qs)
+        }
+      }),
       maybeTagId.map(MatchQuery("id", _)),
       maybeSection.map(MatchQuery("sectionId", _)),
       tagType.map({
@@ -192,18 +206,26 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
           ExistsQuery("podcast")
         case tp: String =>
           MatchQuery("type", tp)
-      })
+      }),
+      maybeSection.map(s=>termQuery("section",s)),
+      maybeCategory.map(cat=>termQuery("tagCategories", cat)),
+      maybeReferences.map(ref=>termQuery("references", ref))  //this is an object field - check how terming works!!
     ).collect({ case Some(param) => param })
   }
-  private def buildTagQuery(maybeTagId:Option[String], maybeSection:Option[String], tagType:Option[String]) = {
-    val base = search("tag")
 
-    val params = tagQueryParams(maybeTagId, maybeSection, tagType)
+  private def buildTagQuery(maybeTagId:Option[String],
+                            maybeSection:Option[String],
+                            tagType:Option[String], maybeQuery:Option[String],
+                            maybeFuzziness:Option[String],
+                            maybeCategory:Option[String], maybeReferences:Option[String]) = {
+    val baseSearch = search("tag")
+
+    val params = tagQueryParams(maybeTagId, maybeSection, tagType, maybeCategory, maybeReferences, maybeQuery, maybeFuzziness)
 
     if(params.isEmpty) {
-      base
+      baseSearch
     } else {
-      base.query(BoolQuery(must=params))
+      baseSearch.query(BoolQuery(must=params))
     }
   }
 
@@ -217,7 +239,16 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
 
   //FIXME: tagsForList / marshalledTags could be DRY'd out a bit
 
-  override def marshalledTags(maybeTagId:Option[String], maybeSection: Option[String], tagType:Option[String], orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Tag]] = {
+  override def marshalledTags(maybeQuery:Option[String],
+                              maybeFuzziness:Option[String],
+                              maybeTagId:Option[String],
+                              maybeSection: Option[String],
+                              tagType:Option[String],
+                              maybeCategory:Option[String],
+                              maybeReferences:Option[String],
+                              orderBy: Option[SortOrder],
+                              limit: Option[Int],
+                              cursor: Option[String]): Future[Edge[Tag]] = {
     val pageSize = limit.getOrElse(defaultPageSize)
 
     val sortParam = if(maybeSection.isDefined || tagType.isDefined) {
@@ -229,7 +260,7 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     Edge.decodeCursor(cursor) match {
       case Right(maybeCursor)=>
         client.execute {
-          buildTagQuery(maybeTagId, maybeSection, tagType)
+          buildTagQuery(maybeTagId, maybeSection, tagType, maybeQuery, maybeFuzziness, maybeCategory, maybeReferences)
             .sortBy(sortParam)
             .limit(pageSize)
             .searchAfter(maybeCursor)
@@ -239,25 +270,10 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     }
   }
 
-  override def tagsForList(tagIdList:Seq[String], maybeSection: Option[String], tagType:Option[String]):Future[Seq[Tag]] = {
-    val tagIdMatches = tagIdList.map(MatchQuery("id", _))
-
-    client.execute {
-      val restrictions = tagQueryParams(None, maybeSection, tagType)
-
-      if(restrictions.nonEmpty) {
-        search("tag").query(
-            BoolQuery(
-              must=restrictions :+ BoolQuery(should=tagIdMatches)
-            )
-          )
-      } else {
-        search("tag").query(BoolQuery(should=tagIdMatches))
-      }
-
-    } flatMap { response=>
+  private def marshalTags(response:Future[Response[SearchResponse]]):Future[Seq[Tag]] = {
+    response flatMap { response=>
       if(response.isError) {
-        logger.error(s"Could not make query for tags ${tagIdList}: ${response.error}")
+        logger.error(s"Could not make query for tags: ${response.error}")
         Future.failed(response.error.asException)
       } else {
         Future(response.result.hits.hits.map(hit=>
@@ -270,6 +286,25 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
           .map(_.toSeq)
       }
     }
+  }
+
+  override def tagsForList(tagIdList:Seq[String], maybeSection: Option[String], tagType:Option[String], maybeCategory:Option[String], maybeReferences:Option[String]):Future[Seq[Tag]] = {
+    val tagIdMatches = tagIdList.map(MatchQuery("id", _))
+
+    val response = client.execute {
+      val restrictions = tagQueryParams(None, maybeSection, tagType, maybeCategory, maybeReferences, None, None)
+
+      if(restrictions.nonEmpty) {
+        search("tag").query(
+            BoolQuery(
+              must=restrictions :+ BoolQuery(should=tagIdMatches)
+            )
+          )
+      } else {
+        search("tag").query(BoolQuery(should=tagIdMatches))
+      }
+    }
+    marshalTags(response)
   }
 
   private def findAtoms(atomIds: Option[Seq[String]], queryString: Option[String],

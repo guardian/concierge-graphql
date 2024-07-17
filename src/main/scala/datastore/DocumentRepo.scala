@@ -20,10 +20,18 @@ trait DocumentRepo {
                      orderDate:Option[String], orderBy:Option[SortOrder],
                      limit: Option[Int], cursor: Option[String]): Future[Edge[Content]]
 
-  def marshalledTags(maybeTagId:Option[String], maybeSection: Option[String], tagType:Option[String],
-                     orderBy: Option[SortOrder], limit: Option[Int], cursor: Option[String]): Future[Edge[Tag]]
+  def marshalledTags(maybeQuery:Option[String],
+                     maybeFuzziness:Option[String],
+                     maybeTagId:Option[String],
+                     maybeSection: Option[String],
+                     tagType:Option[String],
+                     maybeCategory:Option[String],
+                     maybeReferences:Option[String],
+                     orderBy: Option[SortOrder],
+                     limit: Option[Int],
+                     cursor: Option[String]): Future[Edge[Tag]]
 
-  def tagsForList(tagIdList:Seq[String], maybeSection: Option[String], tagType:Option[String]):Future[Seq[Tag]]
+  def tagsForList(tagIdList:Seq[String], maybeSection: Option[String], tagType:Option[String], maybeCategory:Option[String], maybeReferences:Option[String]):Future[Seq[Tag]]
 
   def atomsForList(atomIds: Seq[String], atomType: Option[String]):Future[Seq[Json]]
 

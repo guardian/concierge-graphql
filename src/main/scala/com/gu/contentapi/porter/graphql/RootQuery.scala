@@ -1,6 +1,7 @@
 package com.gu.contentapi.porter.graphql
 
 import com.gu.contentapi.porter.model.{Content, Tag}
+import com.sksamuel.elastic4s.requests.searches.sort.SortOrder
 import sangria.schema._
 import datastore.GQLQueryContext
 import deprecated.anotherschema.Edge
@@ -9,6 +10,8 @@ import io.circe.Json
 import scala.concurrent.ExecutionContext.Implicits.global
 import io.circe.generic.auto._
 import org.slf4j.LoggerFactory
+
+import scala.concurrent.Future
 
 object RootQuery {
   private val logger = LoggerFactory.getLogger(getClass)
@@ -24,14 +27,41 @@ object RootQuery {
     )
   )
 
-  val TagEdge: ObjectType[Unit, Edge[Tag]] = ObjectType(
+  val TagEdge: ObjectType[GQLQueryContext, Edge[Tag]] = ObjectType(
     "TagEdge",
     "A list of tags with pagination features",
-    () => fields[Unit, Edge[Tag]](
+    () => fields[GQLQueryContext, Edge[Tag]](
       Field("totalCount", LongType, Some("Total number of results that match your query"), resolve = _.value.totalCount),
       Field("endCursor", OptionType(StringType), Some("The last record cursor in the set"), resolve = _.value.endCursor),
       Field("hasNextPage", BooleanType, Some("Whether there are any more records to retrieve"), resolve = _.value.hasNextPage),
-      Field("nodes", ListType(com.gu.contentapi.porter.graphql.Tags.Tag), Some("The actual tags returned"), resolve = _.value.nodes)
+      Field("nodes", ListType(com.gu.contentapi.porter.graphql.Tags.Tag), Some("The actual tags returned"), resolve = _.value.nodes),
+      Field("matchingAnyTag", ArticleEdge, Some("Content which matches any of the tags returned"),
+        arguments= ContentQueryParameters.AllContentQueryParameters,
+        resolve = { ctx=>
+          if(ctx.value.nodes.isEmpty) {
+            Future(Edge[Content](
+              0L,
+              None,
+              false,
+              Seq()
+            ))
+          } else {
+            ctx.ctx.repo.marshalledDocs(ctx arg ContentQueryParameters.QueryString,
+              queryFields = ctx arg ContentQueryParameters.QueryFields,
+              atomId = None,
+              forChannel = ctx arg ContentQueryParameters.ChannelArg,
+              userTier = ctx.ctx.userTier,
+              tagIds = Some(ctx.value.nodes.map(_.id)),
+              excludeTags = ctx arg ContentQueryParameters.ExcludeTagArg,
+              sectionIds = ctx arg ContentQueryParameters.SectionArg,
+              excludeSections = ctx arg ContentQueryParameters.ExcludeSectionArg,
+              orderDate = ctx arg PaginationParameters.OrderDate,
+              orderBy = ctx arg PaginationParameters.OrderBy,
+              limit = ctx arg PaginationParameters.Limit,
+              cursor = ctx arg PaginationParameters.Cursor,
+            )
+          }
+      })
     )
   )
 
@@ -56,6 +86,8 @@ object RootQuery {
   val Query = ObjectType[GQLQueryContext, Unit](
     "Query", fields[GQLQueryContext, Unit](
       Field("article", ArticleEdge,
+        description = Some("An Article is the main unit of our publication.  You can search articles directly here, or query" +
+          " tags or sections to see what articles live within it."),
         arguments = ContentQueryParameters.AllContentQueryParameters,
         resolve = ctx =>
           ctx arg ContentQueryParameters.ContentIdArg match {
@@ -71,11 +103,23 @@ object RootQuery {
           }
       ),
       Field("tag", TagEdge,
+        description = Some("The Guardian uses tags to group similar pieces of content together across multiple different viewpoints.  " +
+          "Tags are a closed set, which can be searched here, and there are different types of tags which represent different viewpoints"),
         arguments = TagQueryParameters.AllTagQueryParameters,
         resolve = ctx =>
-          ctx.ctx.repo.marshalledTags(ctx arg TagQueryParameters.tagId, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
+          ctx.ctx.repo.marshalledTags(ctx arg TagQueryParameters.QueryString,
+            ctx arg TagQueryParameters.Fuzziness,
+            ctx arg TagQueryParameters.tagId,
+            ctx arg TagQueryParameters.Section,
+            ctx arg TagQueryParameters.TagType,
+            ctx arg TagQueryParameters.Category,
+            ctx arg TagQueryParameters.Reference,
+            ctx arg PaginationParameters.OrderBy,
+            ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)
       ),
       Field("atom", AtomEdge,
+        description = Some("An Atom is a piece of content which can be linked to multiple articles but may have a production lifecycle independent" +
+          " of these articles.  Examples are cartoons, videos, quizzes, call-to-action blocks, etc."),
         arguments = AtomQueryParameters.AllParameters,
         resolve = ctx=>
       ctx.ctx.repo.atoms(ctx arg AtomQueryParameters.AtomIds, ctx arg AtomQueryParameters.QueryString, ctx arg AtomQueryParameters.QueryFields,
