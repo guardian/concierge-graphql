@@ -1,6 +1,6 @@
 import cats.effect._
 import com.comcast.ip4s.{IpLiteralSyntax, Ipv4Address, Ipv6Address}
-import datastore.{ElasticsearchRepo, GQLQueryContext}
+import datastore.ElasticsearchRepo
 import io.prometheus.client.hotspot.DefaultExports
 import org.http4s._
 import org.http4s.dsl.io._
@@ -8,12 +8,8 @@ import org.http4s.server.Router
 import org.http4s.ember.server._
 import org.http4s.implicits._
 import org.slf4j.LoggerFactory
-import security.{ApiKeyAuth, DeveloperTier, InternalTier, Security, UserTier}
+import security.{ApiKeyAuth, DeveloperTier, Security}
 import internalmetrics.PrometheusMetrics
-import io.circe.Json
-import org.http4s.headers.Server
-import sangria.federation.v2.Federation
-import sangria.schema.Schema
 
 import scala.concurrent.duration._
 import utils.Config.fetchConfig
@@ -68,11 +64,6 @@ object Main extends IOApp {
       }
   }
 
-//  private def graphQL[F[_]: Async]: GraphQL[F, GQLQueryContext] = {
-//    val (schema, um) = Federation.federate[GQLQueryContext, Any, Json](
-//      Schema
-//    )
-//  }
   def run(args:List[String]):IO[ExitCode] = {
     val httpApp = Router("/" -> graphqlService).orNotFound
     logger.info("Starting up on 0.0.0.0 port 9000")
@@ -86,10 +77,5 @@ object Main extends IOApp {
       .build
       .use(_=>IO.never)
       .as(ExitCode.Success)
-//    Server.resource[IO, GQLQueryContext](
-//      logger,
-//      graphQL,
-//      port"9000"
-//    ).use()
   }
 }
