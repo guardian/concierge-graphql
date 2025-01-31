@@ -8,6 +8,8 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import com.gu.contentapi.porter.model
 import datastore.GQLQueryContext
+import sangria.execution.deferred.HasId
+import sangria.federation.v2.Directives
 import sangria.macros.derive
 import security.{InternalTier, RightsManagedTier}
 
@@ -163,6 +165,7 @@ object Content {
         }
       )
     )
-  )
+  ).withDirective(Directives.Key("id"))
 
+  implicit val ContentHasId:HasId[model.Content, String] = HasId(_.id)
 }

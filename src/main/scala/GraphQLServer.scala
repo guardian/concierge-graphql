@@ -32,6 +32,7 @@ class GraphQLServer(documentRepo:DocumentRepo) {
     IO.fromFuture(
       IO {
         val context = GQLQueryContext(documentRepo, tier)
+        //FIXME - add in variables here
         Executor.execute(inUseSchema, doc, middleware = permissions :: metrics :: Nil, userContext = context).map(_.asJson.noSpaces)
       }
     )
