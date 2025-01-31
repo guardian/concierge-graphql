@@ -30,12 +30,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: corretto
-          java-version: 17
-          cache: sbt
+      - name: Setup Scala build
+        uses: guardian/setup-scala@v1
 
       - name: Build and test
         env:
