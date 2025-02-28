@@ -8,7 +8,7 @@ import org.http4s.server.Router
 import org.http4s.ember.server._
 import org.http4s.implicits._
 import org.slf4j.LoggerFactory
-import security.{ApiKeyAuth, DeveloperTier, InternalTier, Security, UserTier}
+import security.{ApiKeyAuth, DeveloperTier, Security}
 import internalmetrics.PrometheusMetrics
 
 import scala.concurrent.duration._

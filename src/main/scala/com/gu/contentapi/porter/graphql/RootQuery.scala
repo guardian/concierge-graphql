@@ -9,7 +9,10 @@ import io.circe.Json
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import io.circe.generic.auto._
+import io.circe.generic.semiauto.deriveDecoder
 import org.slf4j.LoggerFactory
+import sangria.execution.deferred.Fetcher
+import sangria.federation.v2.{Directives, EntityResolver, Federation}
 
 import scala.concurrent.Future
 
@@ -128,5 +131,25 @@ object RootQuery {
     )
   )
 
-  val schema = Schema(Query)
+  //For graphQL Federeation
+  import com.gu.contentapi.porter.graphql.Content.ContentHasId
+  case class StateArg(id: String)
+  val articles: Fetcher[GQLQueryContext, Content, Content, String] = Fetcher {
+    (ctx, ids) => Future.sequence(
+        ids.map(id=>ctx.repo.docById(id).map(_.map(contentTransform))
+        .map(_.nodes.headOption))
+    ).map(_.collect({case Some(content)=>content}))
+  }
+
+  implicit val decoder: sangria.federation.v2.Decoder[Json, StateArg] = deriveDecoder[StateArg].decodeJson(_)
+  private val articleStateResolver = EntityResolver[GQLQueryContext, Json, Content, StateArg](
+    __typeName = Content.getClass.getTypeName,
+    (arg, _) => articles.deferOpt(arg.id)
+  )
+
+  val (schema, um) = Federation.federate[GQLQueryContext, Unit, Json](
+    Schema(Query),
+    sangria.marshalling.circe.CirceInputUnmarshaller,
+    articleStateResolver
+  )
 }
