@@ -8,7 +8,7 @@ import com.sksamuel.elastic4s.ElasticDsl._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
-import com.sksamuel.elastic4s.requests.searches.queries.{DisMaxQuery, ExistsQuery, Fuzzy, FuzzyQuery, NestedQuery, Query, RangeQuery}
+import com.sksamuel.elastic4s.requests.searches.queries.{DisMaxQuery, ExistsQuery, Fuzzy, FuzzyQuery, NestedQuery, Query, QueryStringQuery, RangeQuery}
 import com.sksamuel.elastic4s.requests.searches.queries.compound.BoolQuery
 import com.sksamuel.elastic4s.requests.searches.queries.matches.{FieldWithOptionalBoost, MatchAllQuery, MatchQuery, MultiMatchQuery}
 import com.sksamuel.elastic4s.requests.searches.sort.{FieldSort, ScoreSort, Sort, SortOrder}
@@ -154,15 +154,16 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
     val pageSize = limit.getOrElse(defaultPageSize)
 
     val fieldsToQuery = queryFields
-      .getOrElse(Seq("webTitle", "path"))  //default behaviour from Concierge
-      .map(FieldWithOptionalBoost(_, None))
+      //.getOrElse(Seq("webTitle", "path"))  //default behaviour from Concierge
+      .getOrElse(Seq("webTitle", "fields.standfirst", "fields.trail"))
+      .map(f=>(f, None))
 
     //only internal tier users are allowed to query other channels
     val selectedChannel = if(userTier==InternalTier) forChannel.getOrElse("open") else "open"
 
     val params:Seq[Query] = standardAvailabilityQuery ++ Seq(
       Some(limitToChannelQuery(selectedChannel)),
-      queryString.map(MultiMatchQuery(_, fields = fieldsToQuery)),
+      queryString.map(QueryStringQuery(_, fields = fieldsToQuery)),
       atomId.map(MatchQuery("atomIds.id", _)),
       tagIds.map(tags=>BoolQuery(should=tags.map(MatchQuery("tags", _)))) ,
       excludeTags.map(tags=>BoolQuery(not=Seq(BoolQuery(should=tags.map(MatchQuery("tags", _)))))),
