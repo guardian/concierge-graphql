@@ -25,50 +25,66 @@ class ElasticsearchRepo(endpoint:ElasticNodeEndpoint, val defaultPageSize:Int=20
   private val logger = LoggerFactory.getLogger(getClass)
   private val client = ElasticClient(SttpRequestHttpClient(endpoint))
 
+  override def docByInternalPageCode(internalPageCode: Long): Future[Edge[Json]] = {
+    client.execute {
+      search("content")
+        .query(
+          BoolQuery(must = Seq(
+            MatchQuery("fields.internalPageCode", internalPageCode),
+            MatchQuery("isGone", false),
+            MatchQuery("isExpired", false),
+          ))
+        )
+        .sortByFieldDesc("webPublicationDate")
+    }
+  }.flatMap(searchResponseToEdge)
+
   override def docById(id: String): Future[Edge[Json]] = {
     client.execute {
       search("content")
         .query(
-          BoolQuery(must=Seq(
+          BoolQuery(must = Seq(
             MatchQuery("id", id),
             MatchQuery("isGone", false),
             MatchQuery("isExpired", false),
           ))
         )
         .sortByFieldDesc("webPublicationDate")
-    }.flatMap(response=>{
-      if(response.isSuccess) {
-        response
-          .result
-          .hits
-          .hits
-          .headOption
-          .map(h=>(h, io.circe.parser.parse(h.sourceAsString))) match {
-          case None=>
-            Future(
-              Edge(
-                0,
-                None,
-                false,
-                List[Json]()
-              )
+    }.flatMap(searchResponseToEdge)
+  }
+
+  private def searchResponseToEdge(response: Response[SearchResponse]) = {
+    if (response.isSuccess) {
+      response
+        .result
+        .hits
+        .hits
+        .headOption
+        .map(h => (h, io.circe.parser.parse(h.sourceAsString))) match {
+        case None =>
+          Future(
+            Edge(
+              0,
+              None,
+              false,
+              List[Json]()
             )
-          case Some((_, Left(err)))=>
-            Future.failed(new RuntimeException(err))
-          case Some((hit, Right(json)))=>
-            Future(
-              Edge(
-                response.result.hits.total.value,
-                Edge.cursorValue(hit),
-                false,
-                List(json)
-              )
+          )
+        case Some((_, Left(err))) =>
+          Future.failed(new RuntimeException(err))
+        case Some((hit, Right(json))) =>
+          Future(
+            Edge(
+              response.result.hits.total.value,
+              Edge.cursorValue(hit),
+              false,
+              List(json)
             )
-        }
-      } else {
-        Future.failed(response.error.asException)
+          )
       }
-    })
+    } else {
+      Future.failed(response.error.asException)
+    }
   }
 
   private def defaultingSortParam(orderDate:Option[String], orderBy:Option[SortOrder]): Sort = {

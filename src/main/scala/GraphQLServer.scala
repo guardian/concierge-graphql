@@ -1,12 +1,12 @@
 import cats.effect.IO
-import org.http4s.{Request, Response, Status}
+import com.gu.contentapi.porter.graphql.RootQuery
+import org.http4s.Request
 import sangria.parser.QueryParser
-import sangria.renderer.QueryRenderer._
 import fs2.Stream
 import org.http4s.dsl.io._
 import sangria.execution.Executor
 import sangria.renderer.SchemaRenderer
-import datastore.{DocumentRepo, GQLQueryContext}
+import datastore.{DocumentRepo, FrontsRepo, GQLQueryContext}
 import sangria.marshalling.circe._
 import io.circe.syntax._
 import middleware.{FieldMetrics, FieldPermissions}
@@ -16,10 +16,9 @@ import security.UserTier
 import utils.GraphQLRequestBody
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-class GraphQLServer(documentRepo:DocumentRepo) {
+class GraphQLServer(documentRepo:DocumentRepo, frontsRepo: FrontsRepo) {
   private val logger = LoggerFactory.getLogger(getClass)
   private val inUseSchema = com.gu.contentapi.porter.graphql.RootQuery.schema
 
@@ -31,9 +30,9 @@ class GraphQLServer(documentRepo:DocumentRepo) {
   private def performQuery(doc:Document, variables:Option[Map[String,String]], tier:UserTier) =
     IO.fromFuture(
       IO {
-        val context = GQLQueryContext(documentRepo, tier)
+        val context = GQLQueryContext(documentRepo, frontsRepo, tier)
         //FIXME - add in variables here
-        Executor.execute(inUseSchema, doc, middleware = permissions :: metrics :: Nil, userContext = context).map(_.asJson.noSpaces)
+        Executor.execute(inUseSchema, doc, middleware = permissions :: metrics :: Nil, userContext = context, deferredResolver = RootQuery.resolver).map(_.asJson.noSpaces)
       }
     )
     .map(body=>Ok(body))

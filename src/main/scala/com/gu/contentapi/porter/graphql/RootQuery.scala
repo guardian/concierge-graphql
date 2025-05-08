@@ -1,7 +1,7 @@
 package com.gu.contentapi.porter.graphql
 
 import com.gu.contentapi.porter.model.{Content, Tag}
-import com.sksamuel.elastic4s.requests.searches.sort.SortOrder
+import com.gu.facia.api.models.{Front => FaciaFront}
 import sangria.schema._
 import datastore.GQLQueryContext
 import deprecated.anotherschema.Edge
@@ -11,8 +11,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import io.circe.generic.auto._
 import io.circe.generic.semiauto.deriveDecoder
 import org.slf4j.LoggerFactory
-import sangria.execution.deferred.Fetcher
-import sangria.federation.v2.{Directives, EntityResolver, Federation}
+import sangria.execution.deferred.{DeferredResolver, Fetcher}
+import sangria.federation.v2.{EntityResolver, Federation}
 
 import scala.concurrent.Future
 
@@ -49,7 +49,7 @@ object RootQuery {
               Seq()
             ))
           } else {
-            ctx.ctx.repo.marshalledDocs(ctx arg ContentQueryParameters.QueryString,
+            ctx.ctx.documentRepo.marshalledDocs(ctx arg ContentQueryParameters.QueryString,
               queryFields = ctx arg ContentQueryParameters.QueryFields,
               atomId = None,
               forChannel = ctx arg ContentQueryParameters.ChannelArg,
@@ -79,6 +79,15 @@ object RootQuery {
     )
   )
 
+  val FrontEdge: ObjectType[Unit, Edge[FaciaFront]] = ObjectType(
+    "FrontEdge",
+    "A list of fronts with pagination features",
+    () => fields[Unit, Edge[FaciaFront]](
+      Field("totalCount", LongType, Some("Total number of results that match your query"), resolve = _.value.totalCount),
+      Field("nodes", ListType(FrontSchema.Front), Some("The fronts returned"), resolve = _.value.nodes)
+    )
+  )
+
   private def contentTransform: Json => Content = _.as[Content] match {
     case Right(content) => content
     case Left(err) =>
@@ -95,9 +104,9 @@ object RootQuery {
         resolve = ctx =>
           ctx arg ContentQueryParameters.ContentIdArg match {
             case Some(contentId) =>
-              ctx.ctx.repo.docById(contentId).map(_.map(contentTransform))
+              ctx.ctx.documentRepo.docById(contentId).map(_.map(contentTransform))
             case None =>
-              ctx.ctx.repo
+              ctx.ctx.documentRepo
                 .marshalledDocs(ctx arg ContentQueryParameters.QueryString, ctx arg ContentQueryParameters.QueryFields,
                   None, ctx arg ContentQueryParameters.ChannelArg, ctx.ctx.userTier,
                   ctx arg ContentQueryParameters.TagArg, ctx arg ContentQueryParameters.ExcludeTagArg,
@@ -110,7 +119,7 @@ object RootQuery {
           "Tags are a closed set, which can be searched here, and there are different types of tags which represent different viewpoints"),
         arguments = TagQueryParameters.AllTagQueryParameters,
         resolve = ctx =>
-          ctx.ctx.repo.marshalledTags(ctx arg TagQueryParameters.QueryString,
+          ctx.ctx.documentRepo.marshalledTags(ctx arg TagQueryParameters.QueryString,
             ctx arg TagQueryParameters.Fuzziness,
             ctx arg TagQueryParameters.tagId,
             ctx arg TagQueryParameters.Section,
@@ -125,9 +134,14 @@ object RootQuery {
           " of these articles.  Examples are cartoons, videos, quizzes, call-to-action blocks, etc."),
         arguments = AtomQueryParameters.AllParameters,
         resolve = ctx=>
-      ctx.ctx.repo.atoms(ctx arg AtomQueryParameters.AtomIds, ctx arg AtomQueryParameters.QueryString, ctx arg AtomQueryParameters.QueryFields,
+      ctx.ctx.documentRepo.atoms(ctx arg AtomQueryParameters.AtomIds, ctx arg AtomQueryParameters.QueryString, ctx arg AtomQueryParameters.QueryFields,
         ctx arg AtomQueryParameters.AtomType, ctx arg AtomQueryParameters.RevisionBefore, ctx arg AtomQueryParameters.RevisionAfter,
-        ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor))
+        ctx arg PaginationParameters.OrderBy, ctx arg PaginationParameters.Limit, ctx arg PaginationParameters.Cursor)),
+      Field("front", FrontEdge,
+        description = Some(FrontSchema.description),
+        arguments = FrontQueryParameters.AllParameters,
+        resolve = ctx =>
+          ctx.ctx.frontsRepo.getFronts(ctx arg FrontQueryParameters.FrontIds))
     )
   )
 
@@ -136,12 +150,21 @@ object RootQuery {
   case class StateArg(id: String)
   val articles: Fetcher[GQLQueryContext, Content, Content, String] = Fetcher {
     (ctx, ids) => Future.sequence(
-        ids.map(id=>ctx.repo.docById(id).map(_.map(contentTransform))
+        ids.map(id=>ctx.documentRepo.docById(id).map(_.map(contentTransform))
         .map(_.nodes.headOption))
     ).map(_.collect({case Some(content)=>content}))
   }
 
+  import com.gu.contentapi.porter.graphql.Content.ContentHasPageCode
+  val articlesByPageCode: Fetcher[GQLQueryContext, Content, Content, Long] = Fetcher {
+    (ctx, ids) => Future.sequence(
+      ids.map(id=> ctx.documentRepo.docByInternalPageCode(id).map(_.map(contentTransform))
+        .map(_.nodes.headOption))
+    ).map(_.collect({case Some(content) => content}))
+  }
+
   implicit val decoder: sangria.federation.v2.Decoder[Json, StateArg] = deriveDecoder[StateArg].decodeJson(_)
+
   private val articleStateResolver = EntityResolver[GQLQueryContext, Json, Content, StateArg](
     __typeName = Content.getClass.getTypeName,
     (arg, _) => articles.deferOpt(arg.id)
@@ -152,4 +175,6 @@ object RootQuery {
     sangria.marshalling.circe.CirceInputUnmarshaller,
     articleStateResolver
   )
+
+  val resolver = DeferredResolver.fetchers(FrontSchema.collectionFetcher, articlesByPageCode)
 }
