@@ -2,4 +2,4 @@ package datastore
 
 import security.UserTier
 
-case class GQLQueryContext(repo: DocumentRepo, userTier: UserTier)
+case class GQLQueryContext(documentRepo: DocumentRepo, frontsRepo: FrontsRepo, userTier: UserTier)

@@ -149,14 +149,14 @@ object Content {
 
     ReplaceField("tags", Field("tags", OptionType(ListType(Tags.Tag)),
       arguments = TagQueryParameters.NonPaginatedTagQueryParameters,
-      resolve=ctx=> ctx.ctx.repo.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg TagQueryParameters.Category, ctx arg TagQueryParameters.Reference))
+      resolve=ctx=> ctx.ctx.documentRepo.tagsForList(ctx.value.tags, ctx arg TagQueryParameters.Section, ctx arg TagQueryParameters.TagType, ctx arg TagQueryParameters.Category, ctx arg TagQueryParameters.Reference))
     ),
     ExcludeFields("atomIds", "isGone", "isExpired", "sectionId"),
     AddFields(
       Field("atoms", ListType(Atom.Atom),
         arguments=AtomQueryParameters.AtomType :: Nil,
-        resolve= ctx=>ctx.ctx.repo.atomsForList(ctx.value.atomIds.getOrElse(Seq()).map(_.id), ctx arg AtomQueryParameters.AtomType)),
-      Field("section", OptionType(Section), resolve= ctx=>ctx.ctx.repo.sectionForId(ctx.value.sectionId)),
+        resolve= ctx=>ctx.ctx.documentRepo.atomsForList(ctx.value.atomIds.getOrElse(Seq()).map(_.id), ctx arg AtomQueryParameters.AtomType)),
+      Field("section", OptionType(Section), resolve= ctx=>ctx.ctx.documentRepo.sectionForId(ctx.value.sectionId)),
       Field("webPublicationSecondaryDateDisplay", OptionType(StringType),
         arguments=TimeFormatArg :: Nil,
         resolve = ctx=> {
@@ -168,4 +168,5 @@ object Content {
   ).withDirective(Directives.Key("id"))
 
   implicit val ContentHasId:HasId[model.Content, String] = HasId(_.id)
+  implicit val ContentHasPageCode:HasId[model.Content, Long] = HasId(_.fields.internalPageCode)
 }

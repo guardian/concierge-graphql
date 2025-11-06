@@ -12,6 +12,7 @@ import scala.concurrent.Future
 
 trait DocumentRepo {
   def docById(id:String):Future[Edge[Json]]
+  def docByInternalPageCode(id: Long): Future[Edge[Json]]
 
   def marshalledDocs(queryString: Option[String], queryFields: Option[Seq[String]],
                      atomId: Option[String], forChannel:Option[String], userTier: UserTier,

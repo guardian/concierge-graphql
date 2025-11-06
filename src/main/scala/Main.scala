@@ -1,6 +1,6 @@
 import cats.effect._
 import com.comcast.ip4s.{IpLiteralSyntax, Ipv4Address, Ipv6Address}
-import datastore.ElasticsearchRepo
+import datastore.{ElasticsearchRepo, FrontsRepo}
 import io.prometheus.client.hotspot.DefaultExports
 import org.http4s._
 import org.http4s.dsl.io._
@@ -14,13 +14,17 @@ import internalmetrics.PrometheusMetrics
 import scala.concurrent.duration._
 import utils.Config.fetchConfig
 
+import scala.concurrent.ExecutionContext
+
 object Main extends IOApp {
+  private implicit val ec = ExecutionContext.global
   private val logger = LoggerFactory.getLogger(getClass)
   val config = fetchConfig().get  //it's OK to throw exception here, that will then block startup
 
   DefaultExports.initialize()
   val documentRepo = new ElasticsearchRepo(ElasticSearchResolver.resolve(config))
-  val server = new GraphQLServer(documentRepo)
+  val frontsRepo = new FrontsRepo()
+  val server = new GraphQLServer(documentRepo, frontsRepo)
 
   private val security = Security(config)
 
@@ -72,7 +76,6 @@ object Main extends IOApp {
       .withHost(ipv4"0.0.0.0")
       .withPort(port"9000")
       .withIdleTimeout(2.seconds)
-      .withShutdownTimeout(2.seconds)
       .withHttpApp(httpApp)
       .build
       .use(_=>IO.never)

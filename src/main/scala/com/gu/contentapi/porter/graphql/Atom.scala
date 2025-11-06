@@ -15,7 +15,7 @@ object Atom {
   val AtomChangeDetails = ObjectType[Unit, Json](
     "ChangeDetails",
     "Details of who changed something and when",
-    ()=>fields[Unit, Json](
+    ()=> fields[Unit, Json](
       Field("date",OptionType(StringType),resolve= ctx=>JsonPath.root.date.json.getOption(ctx.value).flatMap(DateTime.fromJsonFormatted)),
       Field("user", OptionType(Content.User),resolve=
         ctx=>JsonPath.root.user.json.getOption(ctx.value)
@@ -59,7 +59,7 @@ object Atom {
       Field("existsIn", RootQuery.ArticleEdge,
         description = Some("Search for articles that embed this atom"),
         arguments = ContentQueryParameters.AllContentQueryParameters,
-        resolve = ctx=> ctx.ctx.repo.marshalledDocs(ctx arg ContentQueryParameters.QueryString, ctx arg ContentQueryParameters.QueryFields,
+        resolve = ctx=> ctx.ctx.documentRepo.marshalledDocs(ctx arg ContentQueryParameters.QueryString, ctx arg ContentQueryParameters.QueryFields,
           JsonPath.root.id.string.getOption(ctx.value), ctx arg ContentQueryParameters.ChannelArg, ctx.ctx.userTier,
           ctx arg ContentQueryParameters.TagArg, ctx arg ContentQueryParameters.ExcludeTagArg,
           ctx arg ContentQueryParameters.SectionArg, ctx arg ContentQueryParameters.ExcludeSectionArg,

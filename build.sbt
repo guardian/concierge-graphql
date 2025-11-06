@@ -54,6 +54,10 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-generic" % "0.14.5",
       "io.circe" %% "circe-optics" % "0.14.1",
 
+      // Fronts
+      "com.gu" %% "fapi-client-play30" % "18.1.1",
+      "com.gu.etag-caching" %% "aws-s3-sdk-v2" % "7.0.2",
+
       "ch.qos.logback" % "logback-classic" % "1.4.12",
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3",
 

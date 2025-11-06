@@ -25,7 +25,7 @@ object Tags {
       Field("matchingContent", RootQuery.ArticleEdge, description=Some("Articles and other content which have this tag"),
         arguments= ContentQueryParameters.AllContentQueryParameters.filterNot(_ == ContentQueryParameters.TagArg),
         resolve = { ctx=>
-          ctx.ctx.repo.marshalledDocs(ctx arg ContentQueryParameters.QueryString,
+          ctx.ctx.documentRepo.marshalledDocs(ctx arg ContentQueryParameters.QueryString,
             queryFields=ctx arg ContentQueryParameters.QueryFields,
             atomId = None,
             forChannel = ctx arg ContentQueryParameters.ChannelArg,
