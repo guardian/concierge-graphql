@@ -1,6 +1,7 @@
 import {Construct} from "constructs";
 import type { GuStack } from "@guardian/cdk/lib/constructs/core";
 import { GuStringParameter } from "@guardian/cdk/lib/constructs/core";
+import { GuCname } from "@guardian/cdk/lib/constructs/dns";
 import { CfnOutput, Duration } from "aws-cdk-lib";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
@@ -63,6 +64,18 @@ export class GraphiqlExplorer extends Construct {
                 }
             ]
         });
+
+        if (
+            (scope.stage === "CODE-AARDVARK" || scope.stage === "PROD-AARDVARK") &&
+            scope.stack === "content-api"
+        ) {
+            new GuCname(scope, "GraphiqlDnsRecord", {
+                app: props.appName,
+                domainName: hostingDomain[scope.stage],
+                resourceRecord: distro.distributionDomainName,
+                ttl: Duration.seconds(60),
+            });
+        }
 
         hostingBucket.addToResourcePolicy(new PolicyStatement({
             effect: Effect.ALLOW,
