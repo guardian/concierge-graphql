@@ -167,6 +167,11 @@ jobs:
             cloudformation-preview:
               - artifacts/cdk.out/ConciergeGraphql-preview-PROD-AARDVARK.template.json
               - artifacts/cdk.out/ConciergeGraphql-preview-CODE-AARDVARK.template.json
+            cloudformation-certificates:
+              - artifacts/cdk.out/GraphiqlCertificate-useast-1-CODE-AARDVARK.template.json
+              - artifacts/cdk.out/GraphiqlCertificate-useast-1-PROD-AARDVARK.template.json
+              - artifacts/cdk.out/GraphiqlCertificate-useast-1-CODE-ZEBRA.template.json
+              - artifacts/cdk.out/GraphiqlCertificate-useast-1-PROD-ZEBRA.template.json
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()  #runs even if there is a test failure
