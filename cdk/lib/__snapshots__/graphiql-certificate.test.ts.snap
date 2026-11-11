@@ -1,0 +1,229 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`The GraphiqlCertificate stack matches the CODE-AARDVARK snapshot 1`] = `
+{
+  "Description": "GraphiQL CloudFront certificate",
+  "Metadata": {
+    "gu:cdk:constructs": [
+      "GuCertificate",
+    ],
+    "gu:cdk:version": "TEST",
+  },
+  "Outputs": {
+    "CertificateArn": {
+      "Description": "CloudFront certificate for graphiql.code-aardvark.guexperiments.co.uk",
+      "Value": {
+        "Ref": "CertificateGraphiqlexplorercertificates642BCB76",
+      },
+    },
+  },
+  "Resources": {
+    "CertificateGraphiqlexplorercertificates642BCB76": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "DomainName": "graphiql.code-aardvark.guexperiments.co.uk",
+        "Tags": [
+          {
+            "Key": "App",
+            "Value": "graphiql-explorer-certificates",
+          },
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/concierge-graphql",
+          },
+          {
+            "Key": "Name",
+            "Value": "GraphiqlCertificate-useast-1-CODE-AARDVARK/CertificateGraphiqlexplorercertificates",
+          },
+          {
+            "Key": "Stack",
+            "Value": "content-api",
+          },
+          {
+            "Key": "Stage",
+            "Value": "CODE-AARDVARK",
+          },
+        ],
+        "ValidationMethod": "DNS",
+      },
+      "Type": "AWS::CertificateManager::Certificate",
+      "UpdateReplacePolicy": "Retain",
+    },
+  },
+}
+`;
+
+exports[`The GraphiqlCertificate stack matches the CODE-ZEBRA snapshot 1`] = `
+{
+  "Description": "GraphiQL CloudFront certificate",
+  "Metadata": {
+    "gu:cdk:constructs": [
+      "GuCertificate",
+    ],
+    "gu:cdk:version": "TEST",
+  },
+  "Outputs": {
+    "CertificateArn": {
+      "Description": "CloudFront certificate for graphiql.code-zebra.guexperiments.co.uk",
+      "Value": {
+        "Ref": "CertificateGraphiqlexplorercertificates642BCB76",
+      },
+    },
+  },
+  "Resources": {
+    "CertificateGraphiqlexplorercertificates642BCB76": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "DomainName": "graphiql.code-zebra.guexperiments.co.uk",
+        "Tags": [
+          {
+            "Key": "App",
+            "Value": "graphiql-explorer-certificates",
+          },
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/concierge-graphql",
+          },
+          {
+            "Key": "Name",
+            "Value": "GraphiqlCertificate-useast-1-CODE-ZEBRA/CertificateGraphiqlexplorercertificates",
+          },
+          {
+            "Key": "Stack",
+            "Value": "content-api",
+          },
+          {
+            "Key": "Stage",
+            "Value": "CODE-ZEBRA",
+          },
+        ],
+        "ValidationMethod": "DNS",
+      },
+      "Type": "AWS::CertificateManager::Certificate",
+      "UpdateReplacePolicy": "Retain",
+    },
+  },
+}
+`;
+
+exports[`The GraphiqlCertificate stack matches the PROD-AARDVARK snapshot 1`] = `
+{
+  "Description": "GraphiQL CloudFront certificate",
+  "Metadata": {
+    "gu:cdk:constructs": [
+      "GuCertificate",
+    ],
+    "gu:cdk:version": "TEST",
+  },
+  "Outputs": {
+    "CertificateArn": {
+      "Description": "CloudFront certificate for graphiql.aardvark.guexperiments.co.uk",
+      "Value": {
+        "Ref": "CertificateGraphiqlexplorercertificates642BCB76",
+      },
+    },
+  },
+  "Resources": {
+    "CertificateGraphiqlexplorercertificates642BCB76": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "DomainName": "graphiql.aardvark.guexperiments.co.uk",
+        "Tags": [
+          {
+            "Key": "App",
+            "Value": "graphiql-explorer-certificates",
+          },
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/concierge-graphql",
+          },
+          {
+            "Key": "Name",
+            "Value": "GraphiqlCertificate-useast-1-PROD-AARDVARK/CertificateGraphiqlexplorercertificates",
+          },
+          {
+            "Key": "Stack",
+            "Value": "content-api",
+          },
+          {
+            "Key": "Stage",
+            "Value": "PROD-AARDVARK",
+          },
+        ],
+        "ValidationMethod": "DNS",
+      },
+      "Type": "AWS::CertificateManager::Certificate",
+      "UpdateReplacePolicy": "Retain",
+    },
+  },
+}
+`;
+
+exports[`The GraphiqlCertificate stack matches the PROD-ZEBRA snapshot 1`] = `
+{
+  "Description": "GraphiQL CloudFront certificate",
+  "Metadata": {
+    "gu:cdk:constructs": [
+      "GuCertificate",
+    ],
+    "gu:cdk:version": "TEST",
+  },
+  "Outputs": {
+    "CertificateArn": {
+      "Description": "CloudFront certificate for graphiql.zebra.guexperiments.co.uk",
+      "Value": {
+        "Ref": "CertificateGraphiqlexplorercertificates642BCB76",
+      },
+    },
+  },
+  "Resources": {
+    "CertificateGraphiqlexplorercertificates642BCB76": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "DomainName": "graphiql.zebra.guexperiments.co.uk",
+        "Tags": [
+          {
+            "Key": "App",
+            "Value": "graphiql-explorer-certificates",
+          },
+          {
+            "Key": "gu:cdk:version",
+            "Value": "TEST",
+          },
+          {
+            "Key": "gu:repo",
+            "Value": "guardian/concierge-graphql",
+          },
+          {
+            "Key": "Name",
+            "Value": "GraphiqlCertificate-useast-1-PROD-ZEBRA/CertificateGraphiqlexplorercertificates",
+          },
+          {
+            "Key": "Stack",
+            "Value": "content-api",
+          },
+          {
+            "Key": "Stage",
+            "Value": "PROD-ZEBRA",
+          },
+        ],
+        "ValidationMethod": "DNS",
+      },
+      "Type": "AWS::CertificateManager::Certificate",
+      "UpdateReplacePolicy": "Retain",
+    },
+  },
+}
+`;
