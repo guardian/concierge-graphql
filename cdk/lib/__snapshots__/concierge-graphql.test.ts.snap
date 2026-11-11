@@ -546,9 +546,17 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         "RecordType": "CNAME",
         "ResourceRecords": [
           {
-            "Fn::GetAtt": [
-              "GraphiQLDistroDDB6F81C",
-              "DomainName",
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Fn::GetAtt": [
+                    "GraphiQLDistroDDB6F81C",
+                    "DomainName",
+                  ],
+                },
+                ".",
+              ],
             ],
           },
         ],

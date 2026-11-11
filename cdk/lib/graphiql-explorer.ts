@@ -70,7 +70,7 @@ export class GraphiqlExplorer extends Construct {
             new GuCname(scope, "GraphiqlDnsRecord", {
                 app: props.appName,
                 domainName,
-                resourceRecord: distro.distributionDomainName,
+                resourceRecord: `${distro.distributionDomainName}.`,
                 ttl: Duration.seconds(300),
             });
         }
