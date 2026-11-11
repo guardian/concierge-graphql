@@ -312,7 +312,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
           ],
           "AllowOrigins": [
             "http://localhost:8081",
-            "https://graphiql.capi.test.dev-gutools.co.uk",
+            "https://graphiql.test.guexperiments.co.uk",
           ],
           "MaxAge": 300,
         },
@@ -445,7 +445,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "Properties": {
         "DistributionConfig": {
           "Aliases": [
-            "graphiql.capi.test.dev-gutools.co.uk",
+            "graphiql.test.guexperiments.co.uk",
           ],
           "CustomErrorResponses": [
             {
@@ -542,7 +542,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
     },
     "GraphiqlDnsRecord": {
       "Properties": {
-        "Name": "graphiql.capi.test.dev-gutools.co.uk",
+        "Name": "graphiql.test.guexperiments.co.uk",
         "RecordType": "CNAME",
         "ResourceRecords": [
           {
