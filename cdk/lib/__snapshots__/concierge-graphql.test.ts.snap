@@ -63,7 +63,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
     "ExplorerCertArn": {
-      "Default": "/TEST/content-api/graphiql-explorer/GlobalCertArn",
+      "Default": "/INFRA/graphiql.test.guexperiments.co.uk/cloudFrontCertificateArn",
       "Description": "Cert to use for graphiql TEST. This must reside in us-east-1",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },

@@ -27,7 +27,7 @@ export class GraphiqlExplorer extends Construct {
         //We can't create the cert here, because it must live in us-east-1 for Cloudfront to use it.
         const hostingCertArn = new GuStringParameter(scope, "ExplorerCertArn", {
             fromSSM: true,
-            default: `/${scope.stage}/${scope.stack}/${props.appName}/GlobalCertArn`,
+            default: `/INFRA/${domainName}/cloudFrontCertificateArn`,
             description: `Cert to use for graphiql ${scope.stage}. This must reside in us-east-1`,
         });
         const certificate = Certificate.fromCertificateArn(this, "CapiExplorerCert", hostingCertArn.valueAsString);
