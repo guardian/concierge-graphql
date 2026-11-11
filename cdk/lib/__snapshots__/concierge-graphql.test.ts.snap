@@ -29,6 +29,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "GuSecurityGroup",
       "GuStringParameter",
       "GuStringParameter",
+      "GuCname",
     ],
     "gu:cdk:version": "TEST",
   },
@@ -62,17 +63,13 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
     "ExplorerCertArn": {
-      "Default": "/TEST/content-api/graphiql-explorer/GlobalCertArn",
+      "Default": "/INFRA/graphiql.test.guexperiments.co.uk/cloudFrontCertificateArn",
       "Description": "Cert to use for graphiql TEST. This must reside in us-east-1",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
     "LoggingStreamName": {
       "Default": "/account/services/logging.stream.name",
       "Description": "SSM parameter containing the Name (not ARN) on the kinesis stream",
-      "Type": "AWS::SSM::Parameter::Value<String>",
-    },
-    "SsmParameterValueaccountservicescapigutoolsTESThostedzoneidC96584B6F00A464EAD1953AFF4B05118Parameter": {
-      "Default": "/account/services/capi.gutools/TEST/hostedzoneid",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
     "StaticBucketName": {
@@ -243,14 +240,6 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "DeletionPolicy": "Retain",
       "Properties": {
         "DomainName": "graphql-preview.internal.content.code.dev-guardianapis.com",
-        "DomainValidationOptions": [
-          {
-            "DomainName": "graphql-preview.internal.content.code.dev-guardianapis.com",
-            "HostedZoneId": {
-              "Ref": "SsmParameterValueaccountservicescapigutoolsTESThostedzoneidC96584B6F00A464EAD1953AFF4B05118Parameter",
-            },
-          },
-        ],
         "Tags": [
           {
             "Key": "App",
@@ -323,7 +312,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
           ],
           "AllowOrigins": [
             "http://localhost:8081",
-            "https://graphiql.capi.test.dev-gutools.co.uk",
+            "https://graphiql.test.guexperiments.co.uk",
           ],
           "MaxAge": 300,
         },
@@ -456,7 +445,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "Properties": {
         "DistributionConfig": {
           "Aliases": [
-            "graphiql.capi.test.dev-gutools.co.uk",
+            "graphiql.test.guexperiments.co.uk",
           ],
           "CustomErrorResponses": [
             {
@@ -550,6 +539,31 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         },
       },
       "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+    },
+    "GraphiqlDnsRecord": {
+      "Properties": {
+        "Name": "graphiql.test.guexperiments.co.uk",
+        "RecordType": "CNAME",
+        "ResourceRecords": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Fn::GetAtt": [
+                    "GraphiQLDistroDDB6F81C",
+                    "DomainName",
+                  ],
+                },
+                ".",
+              ],
+            ],
+          },
+        ],
+        "Stage": "TEST",
+        "TTL": 300,
+      },
+      "Type": "Guardian::DNS::RecordSet",
     },
     "GuHttpsEgressSecurityGroupConciergegraphql1855BF47": {
       "Properties": {

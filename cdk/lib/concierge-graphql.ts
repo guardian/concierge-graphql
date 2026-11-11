@@ -1,7 +1,6 @@
 import type {GuStackProps} from "@guardian/cdk/lib/constructs/core";
 import {GuParameter, GuStack} from "@guardian/cdk/lib/constructs/core";
 import type {App} from "aws-cdk-lib";
-import {aws_ssm} from "aws-cdk-lib";
 import {GuPlayApp} from "@guardian/cdk";
 import {InstanceClass, InstanceSize, InstanceType, Peer, Port, Subnet, Vpc} from "aws-cdk-lib/aws-ec2";
 import {AccessScope} from "@guardian/cdk/lib/constants";
@@ -44,8 +43,6 @@ export class ConciergeGraphql extends GuStack {
 
     const allSubnets = subnetsList.valueAsList.map((id, ctr)=>Subnet.fromSubnetId(this, `Subnet${ctr}`, id));
 
-    const hostedZoneId = aws_ssm.StringParameter.valueForStringParameter(this, `/account/services/capi.gutools/${this.stage}/hostedzoneid`);
-
     const lbDomainName = getHostName(this, ".internal");
 
     const authTable = new Table(this, "AuthTable", {
@@ -69,7 +66,6 @@ export class ConciergeGraphql extends GuStack {
       },
       app: "concierge-graphql",
       certificateProps: {
-        hostedZoneId,
         domainName: lbDomainName,
       },
       instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.LARGE),
