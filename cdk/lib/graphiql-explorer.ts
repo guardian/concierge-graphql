@@ -22,6 +22,11 @@ interface GraphiqlExplorerProps {
 export class GraphiqlExplorer extends Construct {
     constructor(scope: GuStack, id: string, props: GraphiqlExplorerProps) {
         super(scope, id);
+        const domainName = hostingDomain[scope.stage];
+
+        if (!domainName) {
+            return;
+        }
 
         //We can't create the cert here, because it must live in us-east-1 for Cloudfront to use it.
         const hostingCertArn = new GuStringParameter(scope, "ExplorerCertArn", {
@@ -38,12 +43,10 @@ export class GraphiqlExplorer extends Construct {
         });
 
         const hostingBucket = Bucket.fromBucketName(this, "StaticBucket", staticBucketNameParam.valueAsString);
-        const domainName = hostingDomain[scope.stage];
-
         const distro = new Distribution(scope, "GraphiQLDistro", {
             defaultRootObject: "index.html",
             certificate,
-            domainNames: domainName ? [domainName] : [],
+            domainNames: [domainName],
             defaultBehavior: {
                 viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 origin: new S3Origin(hostingBucket, {
@@ -66,14 +69,12 @@ export class GraphiqlExplorer extends Construct {
             ]
         });
 
-        if (domainName) {
-            new GuCname(scope, "GraphiqlDnsRecord", {
-                app: props.appName,
-                domainName,
-                resourceRecord: `${distro.distributionDomainName}.`,
-                ttl: Duration.seconds(300),
-            });
-        }
+        new GuCname(scope, "GraphiqlDnsRecord", {
+            app: props.appName,
+            domainName,
+            resourceRecord: `${distro.distributionDomainName}.`,
+            ttl: Duration.seconds(300),
+        });
 
         hostingBucket.addToResourcePolicy(new PolicyStatement({
             effect: Effect.ALLOW,
