@@ -29,6 +29,7 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
       "GuSecurityGroup",
       "GuStringParameter",
       "GuStringParameter",
+      "GuCname",
     ],
     "gu:cdk:version": "TEST",
   },
@@ -538,6 +539,23 @@ exports[`The ConciergeGraphql stack matches the snapshot 1`] = `
         },
       },
       "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+    },
+    "GraphiqlDnsRecord": {
+      "Properties": {
+        "Name": "graphiql.capi.test.dev-gutools.co.uk",
+        "RecordType": "CNAME",
+        "ResourceRecords": [
+          {
+            "Fn::GetAtt": [
+              "GraphiQLDistroDDB6F81C",
+              "DomainName",
+            ],
+          },
+        ],
+        "Stage": "TEST",
+        "TTL": 300,
+      },
+      "Type": "Guardian::DNS::RecordSet",
     },
     "GuHttpsEgressSecurityGroupConciergegraphql1855BF47": {
       "Properties": {

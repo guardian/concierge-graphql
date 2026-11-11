@@ -38,11 +38,12 @@ export class GraphiqlExplorer extends Construct {
         });
 
         const hostingBucket = Bucket.fromBucketName(this, "StaticBucket", staticBucketNameParam.valueAsString);
+        const domainName = hostingDomain[scope.stage];
 
         const distro = new Distribution(scope, "GraphiQLDistro", {
             defaultRootObject: "index.html",
             certificate,
-            domainNames: [hostingDomain[scope.stage]],
+            domainNames: domainName ? [domainName] : [],
             defaultBehavior: {
                 viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 origin: new S3Origin(hostingBucket, {
@@ -65,15 +66,12 @@ export class GraphiqlExplorer extends Construct {
             ]
         });
 
-        if (
-            (scope.stage === "CODE-AARDVARK" || scope.stage === "PROD-AARDVARK") &&
-            scope.stack === "content-api"
-        ) {
+        if (domainName) {
             new GuCname(scope, "GraphiqlDnsRecord", {
                 app: props.appName,
-                domainName: hostingDomain[scope.stage],
+                domainName,
                 resourceRecord: distro.distributionDomainName,
-                ttl: Duration.seconds(60),
+                ttl: Duration.seconds(300),
             });
         }
 
