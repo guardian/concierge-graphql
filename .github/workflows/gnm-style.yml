@@ -164,6 +164,8 @@ jobs:
             cloudformation:
               - artifacts/cdk.out/ConciergeGraphql-PROD-AARDVARK.template.json
               - artifacts/cdk.out/ConciergeGraphql-CODE-AARDVARK.template.json
+              - artifacts/cdk.out/ConciergeGraphql-PROD-ZEBRA.template.json
+              - artifacts/cdk.out/ConciergeGraphql-CODE-ZEBRA.template.json
             cloudformation-preview:
               - artifacts/cdk.out/ConciergeGraphql-preview-PROD-AARDVARK.template.json
               - artifacts/cdk.out/ConciergeGraphql-preview-CODE-AARDVARK.template.json
