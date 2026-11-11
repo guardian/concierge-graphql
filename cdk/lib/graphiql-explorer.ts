@@ -24,10 +24,6 @@ export class GraphiqlExplorer extends Construct {
         super(scope, id);
         const domainName = hostingDomain[scope.stage];
 
-        if (!domainName) {
-            return;
-        }
-
         //We can't create the cert here, because it must live in us-east-1 for Cloudfront to use it.
         const hostingCertArn = new GuStringParameter(scope, "ExplorerCertArn", {
             fromSSM: true,
