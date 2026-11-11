@@ -31,7 +31,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup Scala build
-        uses: guardian/setup-scala@v1
+        uses: guardian/setup-scala@v2
 
       - name: Build and test
         env:

@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Scala build
-        uses: guardian/setup-scala@v1
+        uses: guardian/setup-scala@v2
 
       - name: Build and test
         env:
