@@ -1,5 +1,3 @@
-regions:
-  - eu-west-1
 allowedStages:
   - CODE-AARDVARK
   - PROD-AARDVARK
@@ -9,6 +7,8 @@ deployments:
   cloudformation:
     type: cloud-formation
     app: concierge-graphql
+    regions:
+      - eu-west-1
     stacks:
       - content-api
     parameters:
@@ -21,6 +21,19 @@ deployments:
         Recipe: ubuntu-focal-capi-arm-jdk11
         AmigoStage: PROD
         BuiltBy: amigo
+  cloudformation-certificates:
+    type: cloud-formation
+    app: graphiql-explorer-certificates
+    stacks:
+      - content-api
+    regions:
+      - us-east-1
+    parameters:
+      templateStagePaths:
+        CODE-AARDVARK: GraphiqlCertificate-useast-1-CODE-AARDVARK.template.json
+        PROD-AARDVARK: GraphiqlCertificate-useast-1-PROD-AARDVARK.template.json
+        CODE-ZEBRA: GraphiqlCertificate-useast-1-CODE-ZEBRA.template.json
+        PROD-ZEBRA: GraphiqlCertificate-useast-1-PROD-ZEBRA.template.json
 #  cloudformation-preview:
 #    type: cloud-formation
 #    app: concierge-graphql
@@ -38,6 +51,8 @@ deployments:
 #        BuiltBy: amigo
   concierge-graphql:
     type: autoscaling
+    regions:
+      - eu-west-1
     stacks:
       - content-api
 #      - content-api-preview
@@ -48,6 +63,8 @@ deployments:
 
   graphiql-explorer:
     type: aws-s3
+    regions:
+      - eu-west-1
     stacks:
       - content-api #we don't need multiple stacks here
     parameters:
